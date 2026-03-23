@@ -40,6 +40,7 @@ export const SignInForm = () => {
             {error}
           </div>
         )}
+        <h1 className="text-3xl font-bold text-white text-center">Iniciar Sesión</h1>
         <Input
           label="Correo electrónico"
           id="email"

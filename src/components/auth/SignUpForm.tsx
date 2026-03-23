@@ -44,6 +44,7 @@ export const SignUpForm = () => {
             {error}
           </div>
         )}
+        <h1 className="text-3xl font-bold text-white text-center  ">Crear Cuenta</h1>
         <div className='md:flex md:gap-4 space-y-3 md:space-y-0'>
             <Input
             label="Nombre"
