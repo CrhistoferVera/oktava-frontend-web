@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useRouter } from 'next/navigation';
@@ -7,15 +7,13 @@ import { GoogleButton } from './GoogleButton';
 import Link from 'next/link';
 import { PasswordInput } from '../ui/PasswordInput';
 import { Logo } from '../ui/Logo';
+import { useLogin } from '@/hooks/auth/useLogin';
 
 export const SignInForm = () => {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const {email,password,error,isLoading,setEmail,setPassword, handleLogin}= useLogin();
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-950 to-black flex flex-col md:flex-row items-center justify-center gap-8 px-5">
+    <div className="min-h-screen bg-linear-to-b from-red-950 to-black flex flex-col md:flex-row items-center justify-center gap-8 px-5">
       <div className="w-full md:w-[30%] text-center">
         <div className="text-5xl font-extrabold pb-5 pt-10 flex items-center justify-center gap-2">
           <p className="text-red-500">OK</p>
@@ -33,7 +31,7 @@ export const SignInForm = () => {
         </p>
       </div>
 
-      <form onSubmit={() => {}} className="w-full md:w-[30%] space-y-5 p-2">
+      <form onSubmit={handleLogin} className="w-full md:w-[30%] space-y-5 p-2">
         
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 text-white px-4 py-3 rounded-lg text-sm">
