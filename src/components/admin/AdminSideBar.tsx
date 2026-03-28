@@ -9,6 +9,8 @@ import {
   LineChart,
   Settings,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface NavItem {
   label: string;
@@ -18,7 +20,7 @@ interface NavItem {
 }
 export const AdminSideBar = () => {
   const { user, logout } = useAuth();
-
+  const pathname = usePathname();
   const NAV_ITEMS: NavItem[] = [
     {
       label: 'Dashboard',
@@ -28,33 +30,37 @@ export const AdminSideBar = () => {
     },
     {
       label: 'Pedidos',
-      href: '/admin/mints',
+      href: '/admin/orders',
       icon: <ScrollText className="w-5 h-5" />,
     },
     {
-      label: 'Menu',
-      href: '/admin/redeem',
+      label: 'Menú',
+      href: '/admin/menu',
       icon: <Drumstick className="w-5 h-5" />,
     },
     {
       label: 'Clientes',
-      href: '/admin/kyc',
+      href: '/admin/clients',
       icon: <User className="w-5 h-5" />,
     },
     {
-      label: 'Historial',
-      href: '/admin/logs',
+      label: 'Reportes',
+      href: '/admin/reports',
       icon: <LineChart className="w-5 h-5" />,
       section: 'Sistema',
     },
     {
-      label: 'Verificacion',
-      href: '/admin/verification',
+      label: 'Configuracion',
+      href: '/admin/configuration',
       icon: <Settings className="w-5 h-5" />,
     },
   ];
+  const isActive = (href: string) => {
+    if (href === "/admin") return pathname === "/admin";
+    return pathname.startsWith(href);
+  };
   return (
-    <div className=" bg-[#161616] justify-between flex flex-col text-white w-[15%] overflow-auto ">
+    <div className=" bg-[#161616]  flex flex-col text-white md:w-[15%] overflow-auto ">
 
       <div className="border-b">
         <div className="text-4xl font-bold pb-1 pt-5 flex items-center justify-center gap-1">
@@ -65,17 +71,40 @@ export const AdminSideBar = () => {
         <p className=" text-gray-500 font-light text-center pb-3">
           SABOR PERUANO - ADMIN
         </p>
-          
-          
-        
-        
       </div>
+      <nav className='mt-2 flex flex-col gap-1 '>
+        {NAV_ITEMS.map((item)=>{
+          const active = isActive(item.href);
+          return (
+            <div key={item.href}>
+              {
+                item.section && (
+                  <div className='text-[13px] font-semibold text-gray-500 uppercase tracking-wider px-3 pt-5 pb-2' >
+                    {item.section}
+                  </div>
+                )
+              }
+              <Link
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
+                  active
+                    ? 'border-l-4 border-red-600 bg-red-950/40 text-white rounded-l-none '
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </Link>
 
-      <div className="px-3 pb-5">
+            </div>
+          )
+        })}
+      </nav>
+      <div className="px-3 pb-5 mt-auto">
         <div className="border-t   border-gray-800 pt-4">
           <div className="flex  items-center gap-3 px-3 py-2">
-            <div className="h-9 w-9 rounded-full bg-purple-600 flex items-center justify-center">
-              <span className="font-semibold text-white text-sm">AD</span>
+            <div className="h-9 w-9 rounded-full border border-gray-600 flex items-center justify-center text-gray-300">
+              <User className="w-5 h-5" />
             </div>
             <div className="flex-1  min-w-0">
               <div className="font-medium text-white text-sm">
@@ -86,7 +115,7 @@ export const AdminSideBar = () => {
 
             <button
               onClick={logout}
-              className="text-gray-500 hover:text-gray-300 transition-colors"
+              className="text-red-500 hover:text-red-400 transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>
