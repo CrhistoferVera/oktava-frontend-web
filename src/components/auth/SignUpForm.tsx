@@ -7,18 +7,17 @@ import { GoogleButton } from './GoogleButton';
 import Link from 'next/link';
 import { PasswordInput } from '../ui/PasswordInput';
 import { Logo } from '../ui/Logo';
+import { PasswordRequirements } from '../ui/PasswordRequirements';
+import { TermsCheckbox } from './TermsCheckBox';
+import { useSignUp } from '@/hooks/auth/useSignUp';
 
 export const SignUpForm = () => {
     const router = useRouter();
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [acceptedTerms, setAcceptedTerms] = useState(false);
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+
+    const {acceptedTerms,confirmPassword,email,error,firstName,
+      handleSignUp,isLoading,lastName,password,phone,
+      setConfirmPassword,setEmail,setFirstName,
+      setLastName,setPassword,setPhone,setAcceptedTerms}=useSignUp();
   return (
     <div className="min-h-screen bg-gradient-to-t from-red-950 to-black flex flex-col md:flex-row items-center justify-center gap-8 px-5">
       <div className="w-full md:w-[30%] text-center">
@@ -38,7 +37,7 @@ export const SignUpForm = () => {
         </p>
       </div>
 
-      <form onSubmit={() => {}} className="w-full md:w-[35%] space-y-3 p-2">
+      <form onSubmit={handleSignUp} className="w-full md:w-[35%] space-y-3 p-2">
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 text-white px-4 py-3 rounded-lg text-sm">
             {error}
@@ -87,8 +86,8 @@ export const SignUpForm = () => {
             id="phoneNumber"
             type="tel"
             placeholder="+1234567890"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             required
             maxLength={20}
             disabled={isLoading}
@@ -115,6 +114,8 @@ export const SignUpForm = () => {
                 disabled={isLoading}
             />
         </div>
+        <PasswordRequirements password={password} show={password.length > 0} />
+        <TermsCheckbox checked={acceptedTerms} onChange={setAcceptedTerms} />
         <Button type="submit" className="w-full" variant="primary">
           {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
         </Button>

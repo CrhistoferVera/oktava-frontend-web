@@ -9,9 +9,8 @@ export const authService = {
         return data;
     },
 
-    // Signup - envía código de verificación al email
     signup: async (userData: RegisterDto) => {
         const { data } = await api.post<AuthResponse>('/auth/sign-up', userData);
         return data;
-    },
+    },  
 };

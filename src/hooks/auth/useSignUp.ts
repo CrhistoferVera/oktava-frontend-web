@@ -8,7 +8,7 @@ export const useSignUp = () => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -42,7 +42,7 @@ export const useSignUp = () => {
                 firstName: firstName,
                 lastName: lastName,
                 password: password,
-                phoneNumber: phoneNumber
+                phone: phone
             }
             const data =await authService.signup(user);
             login(data.accessToken, data.user);
@@ -63,7 +63,7 @@ export const useSignUp = () => {
         firstName,
         lastName,
         email,
-        phoneNumber,
+        phone,
         password,
         confirmPassword,
         acceptedTerms,
@@ -73,10 +73,11 @@ export const useSignUp = () => {
         setFirstName,
         setLastName,
         setEmail,
-        setPhoneNumber,
+        setPhone,
         setPassword,
         setConfirmPassword,
-        handleSignUp
+        handleSignUp,
+        setAcceptedTerms
         
     }
 }

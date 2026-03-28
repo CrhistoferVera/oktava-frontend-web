@@ -19,7 +19,7 @@ export interface RegisterDto {
     password: string;
     firstName: string;
     lastName: string;
-    phoneNumber?: string;
+    phone: string;
 }
 
 export interface AuthResponse {
