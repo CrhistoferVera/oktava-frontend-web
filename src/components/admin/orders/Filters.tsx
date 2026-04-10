@@ -40,7 +40,6 @@ export const Filters = () => {
                 </button>
 
             ))}
-            <h1 className='text-white'>{activeFilter}</h1>
         </div>
     )
 }

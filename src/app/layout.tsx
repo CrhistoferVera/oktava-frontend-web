@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { Roboto_Condensed } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+
+const robotoCondensed = Roboto_Condensed({
+  subsets: ["latin"],
+  variable: "--font-roboto-condensed",
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,6 +21,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      className={robotoCondensed.variable}
     >
       <body className="min-h-full flex flex-col bg-black">
           <AuthProvider>{children}</AuthProvider>
