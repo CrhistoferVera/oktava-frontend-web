@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, MapPin, Copy, Check } from "lucide-react";
 import { Order, OrderStatus, OrderType } from "@/types";
 import { TipoBadge } from "./OrdersTable";
 import { OrderList } from "./OrderList";
@@ -141,6 +141,49 @@ function ActionButtons({ order, onStatusChange }: {
   );
 }
 
+// ─── Acciones de dirección ────────────────────────────────────────────────────
+
+function AddressActions({ address }: { readonly address: NonNullable<Order['address']> }) {
+  const [copied, setCopied] = useState(false);
+
+  const mapsUrl = `https://www.google.com/maps?q=${address.latitude},${address.longitude}`;
+  const fullAddress = [address.direction, address.departament, address.reference]
+    .filter(Boolean)
+    .join(', ');
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(mapsUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="flex gap-2 mt-2">
+      <a
+        href={mapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded bg-blue-900/30 border border-blue-800 text-blue-400 hover:bg-blue-900/50 transition-colors text-[11px] font-semibold"
+      >
+        <MapPin className="w-3 h-3" />
+        Ver en Maps
+      </a>
+      <button
+        onClick={handleCopy}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded border transition-colors text-[11px] font-semibold
+          ${copied
+            ? 'bg-green-900/30 border-green-800 text-green-400'
+            : 'bg-gray-800/60 border-gray-700 text-gray-400 hover:bg-gray-700/60'
+          }`}
+      >
+        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+        {copied ? 'Copiado' : 'Copiar'}
+      </button>
+    </div>
+  );
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export const OrderDetail = ({ order, onStatusChange }: Props) => {
@@ -191,6 +234,11 @@ export const OrderDetail = ({ order, onStatusChange }: Props) => {
                 <p className="px-3 py-1.5 text-white font-semibold text-right">{order.address?.direction ?? '—'}</p>
               </div>
             </div>
+
+            {/* Acciones de dirección */}
+            {order.address && (
+              <AddressActions address={order.address} />
+            )}
           </div>
 
           {/* Ítems y resumen */}

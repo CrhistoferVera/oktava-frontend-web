@@ -1,7 +1,7 @@
 'use client'
-import { ChevronDown, ChevronsUpDown, ChevronUp, Search } from "lucide-react";
-import { useState } from "react";
-import { Filters } from "./Filters";
+import { ChevronDown, ChevronsUpDown, ChevronUp, Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Filters, FILTER_STATUS_MAP } from "./Filters";
 import { createColumnHelper, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, SortingState, useReactTable } from "@tanstack/react-table";
 import { OrderDetail } from "./OrderDetail";
 import { Order, OrderStatus } from "@/types";
@@ -54,8 +54,10 @@ const INITIAL_ORDERS: Order[] = [
     address: {
       id: 'a3', label: 'Trabajo', direction: 'Calle Sucre N° 874, Zona Central',
       departament: 'Piso 2, Of. 201', reference: 'Edificio Torre del Sol, ingreso por Nataniel Aguirre',
-      contact: 'Ana Martínez', latitude: '-17.39321000', longitude: '-66.15701000',
+      contact: 'Ana Martínez', latitude: '-17.377328', longitude: '-66.092586',
     },
+
+
     items: [
       { id: 'i6', orderId: '3', variantId: 'v1', productName: 'Pizza Margarita',    variantName: 'Familiar',     quantity: 2, unitPrice: '450.00', subtotal: '900.00' },
       { id: 'i7', orderId: '3', variantId: 'v6', productName: 'Pizza Pepperoni',    variantName: 'Personal',     quantity: 1, unitPrice: '240.00', subtotal: '240.00' },
@@ -169,6 +171,7 @@ export const OrdersTable = () => {
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [activeFilter, setActiveFilter] = useState('Todos');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
@@ -178,8 +181,13 @@ export const OrdersTable = () => {
     setSelectedOrder(prev => prev?.id === orderId ? { ...prev, status: newStatus } : prev);
   };
 
+  const filteredOrders = useMemo(() => {
+    const statusFilter = FILTER_STATUS_MAP[activeFilter];
+    return statusFilter === null ? orders : orders.filter(o => o.status === statusFilter);
+  }, [orders, activeFilter]);
+
   const table = useReactTable({
-    data: orders,
+    data: filteredOrders,
     columns,
     state: { sorting, globalFilter },
     onSortingChange: setSorting,
@@ -201,7 +209,7 @@ export const OrdersTable = () => {
             className="bg-[#282828] text-gray-300 text-sm pl-8 pr-3 py-2 rounded border border-gray-700 focus:outline-none focus:border-gray-500 w-64"
           />
         </div>
-        <Filters />
+        <Filters value={activeFilter} onChange={setActiveFilter} />
       </div>
       <div className="flex gap-5 items-start">
         <div className="bg-[#161616] border border-gray-800 rounded-lg overflow-hidden w-full">
@@ -233,10 +241,16 @@ export const OrdersTable = () => {
                     </td>
                   </tr>
                 ) : (
-                  table.getRowModel().rows.map(row => (
+                  table.getRowModel().rows.map(row => {
+                    const isSelected = row.original.id === selectedOrder?.id;
+                    return (
                     <tr
                       key={row.id}
-                      className="border-b border-gray-800/50 hover:bg-white/[0.02] transition-colors cursor-pointer"
+                      className={`border-b transition-colors cursor-pointer
+                        ${isSelected
+                          ? 'bg-red-950/30 border-l-2 border-l-red-600 border-b-gray-800/50'
+                          : 'border-b-gray-800/50 hover:bg-white/[0.02]'
+                        }`}
                       onClick={() => setSelectedOrder(row.original)}
                     >
                       {row.getVisibleCells().map(cell => (
@@ -245,17 +259,39 @@ export const OrdersTable = () => {
                         </td>
                       ))}
                     </tr>
-                  ))
+                  );})
                 )}
               </tbody>
             </table>
           </div>
         </div>
+        {/* Panel desktop */}
         <div className="hidden md:block w-80 shrink-0 sticky top-4 self-start">
           <OrderDetail order={selectedOrder} onStatusChange={handleStatusChange} />
         </div>
-        
       </div>
+
+      {/* Modal bottom sheet móvil */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedOrder(null)} />
+          <div className="relative bg-[#161616] rounded-t-2xl max-h-[88vh] flex flex-col">
+            {/* Handle + cerrar */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800 shrink-0">
+              <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto" />
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="absolute right-4 top-3 text-gray-500 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto">
+              <OrderDetail order={selectedOrder} onStatusChange={handleStatusChange} />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
