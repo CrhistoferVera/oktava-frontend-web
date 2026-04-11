@@ -25,7 +25,8 @@ export const config = {
      * - _next/static (archivos estáticos)
      * - _next/image (imágenes optimizadas)
      * - favicon.ico (archivo de icono)
+     * - auth/callback (callback de OAuth, setea cookies antes de redirigir)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|auth/callback).*)',
   ],
 };
