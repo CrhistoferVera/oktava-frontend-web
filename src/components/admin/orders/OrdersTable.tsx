@@ -8,7 +8,7 @@ import { Order, OrderStatus } from "@/types";
 
 // ─── Mock data alineado con la interface Order ────────────────────────────────
 
-const mockOrders: Order[] = [
+const INITIAL_ORDERS: Order[] = [
   {
     id: '1', orderNumber: '#0041', userId: 'u1', addressId: 'a1',
     orderType: 'DELIVERY', status: 'COMPLETED',
@@ -166,12 +166,20 @@ const columns = [
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export const OrdersTable = () => {
+  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    setOrders(prev =>
+      prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+    );
+    setSelectedOrder(prev => prev?.id === orderId ? { ...prev, status: newStatus } : prev);
+  };
+
   const table = useReactTable({
-    data: mockOrders,
+    data: orders,
     columns,
     state: { sorting, globalFilter },
     onSortingChange: setSorting,
@@ -244,7 +252,7 @@ export const OrdersTable = () => {
           </div>
         </div>
         <div className="hidden md:block w-80 shrink-0 sticky top-4 self-start">
-          <OrderDetail order={selectedOrder} />
+          <OrderDetail order={selectedOrder} onStatusChange={handleStatusChange} />
         </div>
         
       </div>
