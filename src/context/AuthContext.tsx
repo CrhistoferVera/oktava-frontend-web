@@ -46,7 +46,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = useCallback(async (token: string, userData: User) => {
     await createSession(token, userData); // Guarda las cookies en el servidor
     setUser(userData); // Actualiza el estado local
-    router.push('/admin/dashboard'); // Ajusta a tu ruta protegida
+    const redirectTo = userData.role === 'ADMIN' ? '/admin/dashboard' : '/menu';
+    router.push(redirectTo);
   }, [router]);
 
   // Cerrar sesión

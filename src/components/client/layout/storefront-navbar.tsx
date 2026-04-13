@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, UserCircle2 } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
+import { UserMenuDropdown } from "@/components/client/layout/user-menu-dropdown";
 
 const navigationLinks = [
   { href: "/", label: "Inicio" },
@@ -22,7 +23,7 @@ function formatNavLinkClass(isActive: boolean) {
 
 export function StorefrontNavbar() {
   const pathname = usePathname();
-  const { totalItems } = useStorefrontCart();
+  const { totalItems, openCart } = useStorefrontCart();
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-md">
@@ -41,9 +42,10 @@ export function StorefrontNavbar() {
           </Link>
 
           <div className="flex items-center gap-2 md:hidden">
-            <Link
-              href="/menu"
-              className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200"
+            <button
+              type="button"
+              onClick={openCart}
+              className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
               aria-label="Carrito"
             >
               <ShoppingBag size={18} />
@@ -52,14 +54,8 @@ export function StorefrontNavbar() {
                   {totalItems}
                 </span>
               )}
-            </Link>
-            <Link
-              href="/sign-in"
-              className="rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200"
-              aria-label="Perfil"
-            >
-              <UserCircle2 size={18} />
-            </Link>
+            </button>
+            <UserMenuDropdown />
           </div>
         </div>
 
@@ -81,9 +77,10 @@ export function StorefrontNavbar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link
-            href="/menu"
-            className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200"
+          <button
+            type="button"
+            onClick={openCart}
+            className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
             aria-label="Carrito"
           >
             <ShoppingBag size={18} />
@@ -92,15 +89,9 @@ export function StorefrontNavbar() {
                 {totalItems}
               </span>
             )}
-          </Link>
+          </button>
 
-          <Link
-            href="/sign-in"
-            className="rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
-            aria-label="Perfil"
-          >
-            <UserCircle2 size={18} />
-          </Link>
+          <UserMenuDropdown />
         </div>
       </div>
     </header>

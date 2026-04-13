@@ -14,7 +14,11 @@ interface StorefrontCartContextValue {
   items: CartItem[];
   totalItems: number;
   totalAmount: number;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
   addToCart: (product: Product) => void;
+  decreaseQuantity: (productId: string) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
 }
@@ -24,6 +28,10 @@ const StorefrontCartContext =
 
 export function StorefrontCartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   const addToCart = useCallback((product: Product) => {
     setItems((previousItems) => {
@@ -39,6 +47,17 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
         item.product.id === product.id
           ? { ...item, quantity: item.quantity + 1 }
           : item,
+      );
+    });
+  }, []);
+
+  const decreaseQuantity = useCallback((productId: string) => {
+    setItems((prev) => {
+      const item = prev.find((i) => i.product.id === productId);
+      if (!item) return prev;
+      if (item.quantity === 1) return prev.filter((i) => i.product.id !== productId);
+      return prev.map((i) =>
+        i.product.id === productId ? { ...i, quantity: i.quantity - 1 } : i,
       );
     });
   }, []);
@@ -72,11 +91,15 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
       items,
       totalItems,
       totalAmount,
+      isCartOpen,
+      openCart,
+      closeCart,
       addToCart,
+      decreaseQuantity,
       removeFromCart,
       clearCart,
     }),
-    [addToCart, clearCart, items, removeFromCart, totalAmount, totalItems],
+    [items, totalItems, totalAmount, isCartOpen, openCart, closeCart, addToCart, decreaseQuantity, removeFromCart, clearCart],
   );
 
   return (

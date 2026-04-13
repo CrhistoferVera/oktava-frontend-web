@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
-    const redirectPath = userData.role === 'ADMIN' ? '/admin/dashboard' : '/';
+    const redirectPath = userData.role === 'ADMIN' ? '/admin/dashboard' : '/menu';
     return NextResponse.redirect(new URL(redirectPath, request.url));
   } catch {
     return NextResponse.redirect(new URL('/sign-in', request.url));

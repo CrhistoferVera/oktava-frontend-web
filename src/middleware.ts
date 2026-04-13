@@ -1,17 +1,27 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const PUBLIC_ROUTES = ['/', '/menu'];
+const AUTH_PAGES = ['/sign-in', '/sign-up'];
+const PROTECTED_PREFIXES = ['/orders', '/admin', '/profile', '/addresses'];
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const isAuthPage = request.nextUrl.pathname.startsWith('/sign-in') || 
-                     request.nextUrl.pathname.startsWith('/sign-up');
+  const { pathname } = request.nextUrl;
 
-  if (!token && !isAuthPage) {
+  const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isPublic =
+    PUBLIC_ROUTES.some((p) => pathname === p || pathname.startsWith(p + '/'));
+
+  // Rutas protegidas sin token → login
+  if (isProtected && !token) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url)); // Cambia '/dashboard' por tu ruta principal
+  // Ya autenticado intentando ir al login → dashboard
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 
   return NextResponse.next();
