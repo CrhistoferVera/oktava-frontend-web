@@ -7,9 +7,9 @@ export async function createSession(token: string, userData: any) {
   
   // 1. Guardamos el Token de forma segura (HttpOnly)
   cookieStore.set('token', token, {
-    httpOnly: true, // El navegador bloquea el acceso vía JavaScript (previene XSS)
-    secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
-    maxAge: 60 * 60 * 24 * 7, // 1 semana de duración
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7,
     path: '/',
   });
 
