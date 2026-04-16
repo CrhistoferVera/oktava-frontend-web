@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Client, ClientSegment, ClientSegmentSummary } from '@/types/client.types';
 
 const segmentConfig: Record<ClientSegment, Omit<ClientSegmentSummary, 'count'>> = {

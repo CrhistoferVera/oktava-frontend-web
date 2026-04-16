@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Client, ClientMetricItem } from '@/types/client.types';
 import { ClientMetricCard } from '@/components/admin/clients/metric-card';
 
@@ -17,26 +17,21 @@ export function ClientsMetrics({ clients }: ClientsMetricsProps) {
             clients.reduce((sum, c) => sum + c.totalOrders, 0) / total,
           );
 
+    const totalOrdersSum = clients.reduce((sum, c) => sum + c.totalOrders, 0);
     const avgTicket =
-      total === 0
+      totalOrdersSum === 0
         ? 0
         : Math.round(
-            clients.reduce((sum, c) => sum + c.totalSpent, 0) /
-              clients.reduce((sum, c) => sum + c.totalOrders, 0),
+            clients.reduce((sum, c) => sum + c.totalSpent, 0) / totalOrdersSum,
           );
 
-    const avgRating =
-      total === 0
-        ? 0
-        : (
-            clients.reduce((sum, c) => sum + c.rating, 0) / total
-          ).toFixed(1);
+    const vipCount = clients.filter((c) => c.segment === 'vip').length;
 
     return [
       {
         label: 'Total Clientes',
         value: String(total),
-        subValue: '↑ 23 este mes',
+        subValue: 'registrados',
         trendUp: true,
         icon: 'trend',
       },
@@ -49,14 +44,13 @@ export function ClientsMetrics({ clients }: ClientsMetricsProps) {
       {
         label: 'Ticket Promedio',
         value: `${avgTicket} Bs`,
-        subValue: '↑ 5% vs mes anterior',
-        trendUp: true,
+        subValue: 'por pedido',
         icon: 'ticket',
       },
       {
-        label: 'Satisfacción',
-        value: String(avgRating),
-        subValue: 'rating promedio',
+        label: 'Clientes VIP',
+        value: String(vipCount),
+        subValue: '50+ pedidos',
         icon: 'smile',
       },
     ];

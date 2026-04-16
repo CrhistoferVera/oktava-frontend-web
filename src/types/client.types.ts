@@ -5,13 +5,13 @@ export type Client = {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
-  address: string;
-  rating: number;
+  phone: string | null;
+  address: string | null;
   totalOrders: number;
   totalSpent: number;
   segment: ClientSegment;
   joinedAt: string; // ISO date string
+  isActive: boolean;
 };
 
 export type ClientMetricItem = {
@@ -27,4 +27,28 @@ export type ClientSegmentSummary = {
   label: string;
   criteria: string;
   count: number;
+};
+
+export type EditClientFormFields = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  isActive: boolean;
+};
+
+export type UpdateClientPayload = {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  isActive: boolean;
+};
+
+// Shape returned by PATCH /users/:id
+export type UpdateClientResponse = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  isActive: boolean;
 };

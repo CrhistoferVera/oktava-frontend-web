@@ -1,36 +1,33 @@
-import { ProductCategory, ProductStatus } from './product.types';
+import { ProductStatus } from './product.types';
 
 export type ProductFormMode = 'create' | 'edit';
 
+// What the form fields hold internally (all strings for controlled inputs)
+export type CreateProductFormFields = {
+  name: string;
+  description: string;
+  categoryId: string;
+  price: string;
+  status: ProductStatus;
+  imageUrl: string;
+};
+
+// What gets sent to the backend (POST /products or PATCH /products/:id)
+// stock and margin do not exist in the backend schema — omitted intentionally.
 export type CreateProductPayload = {
   name: string;
   description: string;
-  category: ProductCategory;
+  categoryId: string;
   price: number;
-  stock: number;
-  status: ProductStatus;
   imageUrl: string;
-  margin: number;
+  isAvailable: boolean; // derived from status: 'active' → true, 'inactive' → false
 };
 
 export type CreateProductFormErrors = {
   name?: string;
   description?: string;
-  category?: string;
+  categoryId?: string;
   price?: string;
-  stock?: string;
   status?: string;
   imageUrl?: string;
-  margin?: string;
-};
-
-export type CreateProductFormFields = {
-  name: string;
-  description: string;
-  category: ProductCategory;
-  price: string;
-  stock: string;
-  status: ProductStatus;
-  imageUrl: string;
-  margin: string;
 };

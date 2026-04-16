@@ -1,79 +1,175 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { MenuCategoryTabs } from "@/components/admin/menu/category-tabs";
-import { CreateProductModal } from "@/components/admin/menu/create-product-modal";
-import { MenuHeader } from "@/components/admin/menu/header";
-import { MenuMetrics } from "@/components/admin/menu/metrics";
-import { mockProducts } from "@/components/admin/menu/mock-products";
-import { ProductGrid } from "@/components/admin/menu/product-grid";
-import { productToFormFields } from "@/components/admin/menu/product-form.utils";
-import { MenuSearch } from "@/components/admin/menu/search";
-import { Product, ProductFilterCategory } from "@/types/product.types";
-import { CreateProductPayload } from "@/types/product-form.types";
+import { useEffect, useMemo, useState } from 'react';
+import { MenuCategoryTabs } from '@/components/admin/menu/category-tabs';
+import { CreateProductModal } from '@/components/admin/menu/create-product-modal';
+import { ManageCategoriesModal } from '@/components/admin/menu/manage-categories-modal';
+import { MenuHeader } from '@/components/admin/menu/header';
+import { MenuMetrics } from '@/components/admin/menu/metrics';
+import { ProductGrid } from '@/components/admin/menu/product-grid';
+import { productToFormFields } from '@/components/admin/menu/product-form.utils';
+import { MenuSearch } from '@/components/admin/menu/search';
+import { productService } from '@/services/product.service';
+import { Category, Product, ProductFilterCategory } from '@/types/product.types';
+import { CreateProductPayload } from '@/types/product-form.types';
 
 type ProductModalState =
-  | { mode: "closed" }
-  | { mode: "create" }
-  | { mode: "edit"; product: Product };
+  | { mode: 'closed' }
+  | { mode: 'create' }
+  | { mode: 'edit'; product: Product };
 
 export default function MenuPage() {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [activeCategory, setActiveCategory] =
-    useState<ProductFilterCategory>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [modalState, setModalState] = useState<ProductModalState>({
-    mode: "closed",
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategory, setActiveCategory] = useState<ProductFilterCategory>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [modalState, setModalState] = useState<ProductModalState>({ mode: 'closed' });
+  const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // ─── Initial load ────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const [productsData, categoriesData] = await Promise.all([
+          productService.getProducts(),
+          productService.getCategories(),
+        ]);
+        setProducts(productsData);
+        setCategories(categoriesData);
+      } catch {
+        setError('Error al cargar los productos. Intenta recargar la página.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  // ─── Refresh active categories (called after category CRUD) ──────────────────
+
+  async function refreshCategories() {
+    try {
+      const data = await productService.getCategories();
+      setCategories(data);
+      // If the active filter no longer exists, reset to 'all'
+      if (activeCategory !== 'all' && !data.find((c) => c.id === activeCategory)) {
+        setActiveCategory('all');
+      }
+    } catch {
+      // non-blocking; categories will be stale at worst
+    }
+  }
+
+  // ─── Filtering ───────────────────────────────────────────────────────────────
 
   const filteredProducts = useMemo(() => {
-    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+    const normalized = searchTerm.trim().toLowerCase();
 
     return products.filter((product) => {
       const matchesCategory =
-        activeCategory === "all" || product.category === activeCategory;
+        activeCategory === 'all' || product.categoryId === activeCategory;
 
       const matchesSearch =
-        normalizedSearchTerm === "" ||
-        product.name.toLowerCase().includes(normalizedSearchTerm) ||
-        product.description.toLowerCase().includes(normalizedSearchTerm);
+        normalized === '' ||
+        product.name.toLowerCase().includes(normalized) ||
+        (product.description ?? '').toLowerCase().includes(normalized);
 
       return matchesCategory && matchesSearch;
     });
   }, [products, activeCategory, searchTerm]);
 
-  // Memoized so the form's useEffect only fires when the product actually changes,
-  // not on every render.
   const editInitialValues = useMemo(() => {
-    if (modalState.mode !== "edit") return undefined;
+    if (modalState.mode !== 'edit') return undefined;
     return productToFormFields(modalState.product);
   }, [modalState]);
 
+  // ─── Product modal handlers ───────────────────────────────────────────────────
+
   function openCreateModal() {
-    setModalState({ mode: "create" });
+    setModalState({ mode: 'create' });
   }
 
   function openEditModal(product: Product) {
-    setModalState({ mode: "edit", product });
+    setModalState({ mode: 'edit', product });
   }
 
   function closeModal() {
-    setModalState({ mode: "closed" });
+    if (isSaving) return;
+    setModalState({ mode: 'closed' });
   }
 
-  function handleCreateProduct(payload: CreateProductPayload) {
-    const newProduct: Product = {
-      ...payload,
-      id: `product-${Date.now()}`,
-    };
-    setProducts((prev) => [newProduct, ...prev]);
+  // ─── Product CRUD handlers ────────────────────────────────────────────────────
+
+  async function handleCreateProduct(payload: CreateProductPayload) {
+    try {
+      setIsSaving(true);
+      setError(null);
+      const created = await productService.createProduct(payload);
+      setProducts((prev) => [created, ...prev]);
+      setModalState({ mode: 'closed' });
+    } catch {
+      setError('No se pudo crear el producto. Verifica los datos e intenta de nuevo.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function handleUpdateProduct(payload: CreateProductPayload) {
-    if (modalState.mode !== "edit") return;
+  async function handleUpdateProduct(payload: CreateProductPayload) {
+    if (modalState.mode !== 'edit') return;
     const productId = modalState.product.id;
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...payload, id: productId } : p)),
+
+    try {
+      setIsSaving(true);
+      setError(null);
+      const updated = await productService.updateProduct(productId, payload);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? updated : p)),
+      );
+      setModalState({ mode: 'closed' });
+    } catch {
+      setError('No se pudo actualizar el producto. Intenta de nuevo.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteProduct(product: Product) {
+    if (!window.confirm(`¿Desactivar "${product.name}"? El producto quedará inactivo.`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(product.id);
+      setError(null);
+      await productService.deleteProduct(product.id);
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, status: 'inactive', isAvailable: false } : p,
+        ),
+      );
+    } catch {
+      setError('No se pudo desactivar el producto. Intenta de nuevo.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-96 items-center justify-center">
+        <p className="text-zinc-400">Cargando productos...</p>
+      </div>
     );
   }
 
@@ -81,24 +177,53 @@ export default function MenuPage() {
     <>
       <div className="flex flex-col gap-8">
         <MenuHeader onCreateProductClick={openCreateModal} />
+
+        {error && (
+          <div className="flex items-center justify-between rounded-2xl border border-red-800 bg-red-950/40 px-5 py-4">
+            <p className="text-sm text-red-400">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="ml-4 text-sm text-zinc-400 hover:text-white"
+            >
+              Cerrar
+            </button>
+          </div>
+        )}
+
         <MenuCategoryTabs
           products={products}
+          categories={categories}
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}
+          onManageClick={() => setManageCategoriesOpen(true)}
         />
         <MenuSearch value={searchTerm} onChange={setSearchTerm} />
         <MenuMetrics products={filteredProducts} />
-        <ProductGrid products={filteredProducts} onEdit={openEditModal} />
+        <ProductGrid
+          products={filteredProducts}
+          deletingId={deletingId}
+          onEdit={openEditModal}
+          onDelete={handleDeleteProduct}
+        />
       </div>
 
       <CreateProductModal
-        isOpen={modalState.mode !== "closed"}
-        mode={modalState.mode === "edit" ? "edit" : "create"}
+        isOpen={modalState.mode !== 'closed'}
+        mode={modalState.mode === 'edit' ? 'edit' : 'create'}
+        categories={categories}
         initialValues={editInitialValues}
+        isSaving={isSaving}
         onClose={closeModal}
         onSubmit={
-          modalState.mode === "edit" ? handleUpdateProduct : handleCreateProduct
+          modalState.mode === 'edit' ? handleUpdateProduct : handleCreateProduct
         }
+      />
+
+      <ManageCategoriesModal
+        isOpen={manageCategoriesOpen}
+        onClose={() => setManageCategoriesOpen(false)}
+        onCategoriesChanged={refreshCategories}
       />
     </>
   );
