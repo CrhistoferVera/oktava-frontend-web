@@ -4,6 +4,7 @@
 const PLACEHOLDER = "https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=400&auto=format&fit=crop";
 
 import { X, Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 
 function formatCurrency(value: number) {
@@ -11,6 +12,7 @@ function formatCurrency(value: number) {
 }
 
 export function CartDrawer() {
+  const router = useRouter();
   const {
     items,
     totalItems,
@@ -174,9 +176,10 @@ export function CartDrawer() {
 
               <button
                 type="button"
+                onClick={() => { closeCart(); router.push("/checkout"); }}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/30 transition-all hover:bg-red-500 hover:scale-[1.02] active:scale-100"
               >
-                Procceder con el pedido
+                Proceder con el pedido
                 <ArrowRight size={16} />
               </button>
 

@@ -79,13 +79,15 @@ export interface Order {
 // ─────────────────────────────────────────────
 
 export interface CreateOrderItemDto {
-  variantId: string;
+  productId: string;
   quantity: number;
 }
 
+export type PaymentMethod = 'QR' | 'CASH' | 'CARD';
+
 export interface CreateOrderDto {
   orderType: OrderType;
-  addressId?: string;  // requerido si orderType === 'DELIVERY'
+  addressId?: string;
   notes?: string;
   items: CreateOrderItemDto[];
 }

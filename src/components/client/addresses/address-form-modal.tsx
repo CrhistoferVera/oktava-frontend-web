@@ -5,10 +5,9 @@ import {
   AdvancedMarker,
   Map,
   useMap,
-  useMapsLibrary,
   type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
-import { X } from 'lucide-react';
+import { X, Search, Loader2 } from 'lucide-react';
 import type { Address, AddressPayload } from '@/types/address.types';
 
 const DEFAULT_CENTER = { lat: -17.3895, lng: -66.1568 };
@@ -291,58 +290,61 @@ export function AddressFormModal({ isOpen, initialData, isSaving, onClose, onSav
   );
 }
 
-// ─── Places Autocomplete (new API: PlaceAutocompleteElement) ─────────────────
+// ─── Places Search (geocode on Enter or button click) ────────────────────────
 interface PlacesAutocompleteProps {
   readonly hasError: boolean;
   readonly onSelect: (direction: string, lat: number, lng: number, placeId: string) => void;
 }
 
 function PlacesAutocomplete({ hasError, onSelect }: PlacesAutocompleteProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const places = useMapsLibrary('places');
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!places || !containerRef.current) return;
-
-    const element = new (places as any).PlaceAutocompleteElement({
-      requestedLanguage: 'es',
-    }) as HTMLElement;
-
-    element.style.cssText = `
-      width: 100%;
-      --gmp-input-border-radius: 0.75rem;
-      --gmp-input-border-color: ${hasError ? 'rgb(239 68 68)' : 'rgb(63 63 70)'};
-      --gmp-input-padding: 0.625rem 1rem;
-      --gmp-input-background-color: rgb(24 24 27);
-      --gmp-input-font-size: 0.875rem;
-      --gmp-input-font-color: white;
-      --gmp-input-placeholder-font-color: rgb(82 82 91);
-    `;
-
-    containerRef.current.appendChild(element);
-
-    const handleSelect = async (event: Event) => {
-      const place = (event as any).place as google.maps.places.Place;
-      await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'id'] });
-      if (!place.location) return;
-      const lat = place.location.lat();
-      const lng = place.location.lng();
-      onSelect(place.formattedAddress ?? place.displayName ?? '', lat, lng, place.id ?? '');
-    };
-
-    element.addEventListener('gmp-placeselect', handleSelect);
-
-    return () => {
-      element.removeEventListener('gmp-placeselect', handleSelect);
-      element.remove();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [places]);
+  async function geocode() {
+    const text = query.trim();
+    if (!text || searching) return;
+    setSearching(true);
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: text }, (results, status) => {
+      setSearching(false);
+      if (status === 'OK' && results?.[0]) {
+        const loc = results[0].geometry.location;
+        onSelect(
+          results[0].formatted_address,
+          loc.lat(),
+          loc.lng(),
+          results[0].place_id ?? '',
+        );
+      }
+    });
+  }
 
   return (
     <div className="space-y-1.5">
       <p className="text-xs font-medium text-zinc-400">Buscar dirección</p>
-      <div ref={containerRef} className="w-full" />
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), geocode())}
+          placeholder="Escribe tu dirección y presiona Enter o busca…"
+          className={`flex-1 rounded-xl border bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 transition ${
+            hasError ? 'border-red-500' : 'border-zinc-800 focus:border-red-500'
+          }`}
+        />
+        <button
+          type="button"
+          onClick={geocode}
+          disabled={searching || !query.trim()}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 transition hover:border-red-500 hover:text-red-400 disabled:opacity-40"
+          aria-label="Buscar"
+        >
+          {searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+        </button>
+      </div>
     </div>
   );
 }
