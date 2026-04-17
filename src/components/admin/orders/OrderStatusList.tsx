@@ -1,45 +1,26 @@
-import { OrderStatusCardProps } from "@/types/order.types"
 import { Hourglass, ScanSearch, Truck, CheckCircle, XCircle } from "lucide-react"
 import { OrderStatusCard } from "./OrderStatusCard"
+import type { Order } from "@/types/order.types"
 
-const initialState: OrderStatusCardProps[] = [
-  {
-    value: '3',
-    name: 'Pendientes',
-    icon: <Hourglass size={32} color="orange"/>,
-    color: 'orange',
-  },
-  {
-    value: '2',
-    name: 'Preparando',
-    icon: <ScanSearch size={32} color="blue"/>,
-    color: 'blue',
-  },
-  {
-    value: '1',
-    name: 'En camino',
-    icon: <Truck size={32} color="red"/>,
-    color: 'red',
-  },
-  {
-    value: '3',
-    name: 'Entregados hoy',
-    icon: <CheckCircle size={32} color="green"/>,
-    color: 'green',
-  },
-  {
-    value: '1',
-    name: 'Cancelados',
-    icon: <XCircle size={32} color="gray"/>,
-    color: 'gray',
-  },
-]
+interface Props {
+  readonly orders: Order[]
+}
 
-export const OrderStatusList = () => {
+export const OrderStatusList = ({ orders }: Props) => {
+  const count = (status: string) => orders.filter(o => o.status === status).length
+
+  const cards = [
+    { name: 'Pendientes',    value: count('PENDING'),   icon: <Hourglass   size={32} color="orange" />, color: 'orange' },
+    { name: 'Preparando',    value: count('PREPARING'), icon: <ScanSearch  size={32} color="blue"   />, color: 'blue'   },
+    { name: 'En camino',     value: count('ON_THE_WAY'),icon: <Truck       size={32} color="red"    />, color: 'red'    },
+    { name: 'Entregados hoy',value: count('COMPLETED'), icon: <CheckCircle size={32} color="green"  />, color: 'green'  },
+    { name: 'Cancelados',    value: count('CANCELLED'), icon: <XCircle     size={32} color="gray"   />, color: 'gray'   },
+  ]
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {initialState.map((card) => (
-        <OrderStatusCard key={card.name} {...card} />
+      {cards.map((card) => (
+        <OrderStatusCard key={card.name} {...card} value={String(card.value)} />
       ))}
     </div>
   )
