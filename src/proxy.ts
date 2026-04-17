@@ -16,9 +16,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  // Ya autenticado intentando ir al login → dashboard
+  // Ya autenticado intentando ir al login → menú
   if (isAuthPage && token) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    return NextResponse.redirect(new URL('/menu', request.url));
   }
 
   return NextResponse.next();

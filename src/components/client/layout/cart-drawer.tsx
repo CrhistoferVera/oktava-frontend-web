@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+const PLACEHOLDER = "https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=400&auto=format&fit=crop";
+
 import { X, Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 
@@ -98,7 +100,7 @@ export function CartDrawer() {
                   {/* Image */}
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl">
                     <img
-                      src={product.imageUrl}
+                      src={product.imageUrl ?? PLACEHOLDER}
                       alt={product.name}
                       className="h-full w-full object-cover"
                     />
@@ -122,7 +124,7 @@ export function CartDrawer() {
 
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm font-bold text-white">
-                        {formatCurrency(product.price * quantity)}
+                        {formatCurrency((product.price ?? 0) * quantity)}
                       </span>
 
                       {/* Counter */}
@@ -174,7 +176,7 @@ export function CartDrawer() {
                 type="button"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/30 transition-all hover:bg-red-500 hover:scale-[1.02] active:scale-100"
               >
-                Confirmar pedido
+                Procceder con el pedido
                 <ArrowRight size={16} />
               </button>
 

@@ -1,14 +1,11 @@
 import Link from "next/link";
-import type { ProductCategory, ProductCategoryId } from "@/types/storefront.types";
+import type { ProductCategory } from "@/types/storefront.types";
 
 interface HomeCategoryStripProps {
   readonly categories: ProductCategory[];
 }
 
-const CATEGORY_STYLE: Record<
-  ProductCategoryId,
-  { emoji: string; from: string; border: string; glow: string }
-> = {
+const SLUG_STYLE: Record<string, { emoji: string; from: string; border: string; glow: string }> = {
   combos: {
     emoji: "🍗",
     from: "from-red-900/70 to-red-950/80",
@@ -68,10 +65,9 @@ export function HomeCategoryStrip({ categories }: HomeCategoryStripProps) {
         </Link>
       </div>
 
-      {/* Scrollable strip */}
       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory -mx-1 px-1">
         {categories.map((category) => {
-          const style = CATEGORY_STYLE[category.id] ?? fallbackStyle;
+          const style = SLUG_STYLE[category.slug] ?? fallbackStyle;
           return (
             <Link
               key={category.id}
@@ -83,9 +79,6 @@ export function HomeCategoryStrip({ categories }: HomeCategoryStripProps) {
               </span>
               <p className="font-bold text-white text-base leading-tight">
                 {category.label}
-              </p>
-              <p className="mt-1.5 text-xs text-zinc-400 leading-relaxed line-clamp-2">
-                {category.description}
               </p>
             </Link>
           );

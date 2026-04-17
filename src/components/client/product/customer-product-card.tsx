@@ -1,13 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Clock3, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import type { Product } from "@/types/storefront.types";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 
 interface CustomerProductCardProps {
-  product: Product;
+  readonly product: Product;
 }
+
+const PLACEHOLDER = "https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=800&auto=format&fit=crop";
 
 function formatCurrency(value: number) {
   return `Bs. ${value.toFixed(0)}`;
@@ -21,7 +23,7 @@ export function CustomerProductCard({ product }: CustomerProductCardProps) {
     <article className="oktava-surface overflow-hidden rounded-3xl flex flex-col">
       <div className="relative h-52 overflow-hidden shrink-0">
         <img
-          src={product.imageUrl}
+          src={product.imageUrl ?? PLACEHOLDER}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
         />
@@ -42,18 +44,16 @@ export function CustomerProductCard({ product }: CustomerProductCardProps) {
           <h3 className="text-lg font-semibold leading-tight text-white">
             {product.name}
           </h3>
-          <p className="text-sm leading-relaxed text-zinc-400">
-            {product.description}
-          </p>
+          {product.description && (
+            <p className="text-sm leading-relaxed text-zinc-400">
+              {product.description}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between">
           <span className="text-2xl font-bold text-white">
-            {formatCurrency(product.price)}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-400">
-            <Clock3 size={12} />
-            {product.prepTimeMinutes} min
+            {product.price == null ? "—" : formatCurrency(product.price)}
           </span>
         </div>
 

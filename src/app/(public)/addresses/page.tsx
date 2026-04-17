@@ -1,17 +1,21 @@
-import { MapPin } from "lucide-react";
+'use client';
 
-export default function AddressesPage() {
+import dynamic from 'next/dynamic';
+
+const AddressesClient = dynamic(
+  () => import('@/components/client/addresses/addresses-client'),
+  { ssr: false, loading: () => <AddressesSkeleton /> },
+);
+
+function AddressesSkeleton() {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-      <div className="grid h-20 w-20 place-items-center rounded-2xl bg-white/5 border border-white/10">
-        <MapPin size={36} className="text-zinc-600" />
-      </div>
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-white [font-family:var(--font-display)] uppercase">
-          Mis direcciones
-        </h1>
-        <p className="text-sm text-zinc-500">Esta sección estará disponible próximamente.</p>
-      </div>
+    <div className="space-y-6">
+      <div className="h-10 w-48 rounded-xl bg-white/5 animate-pulse" />
+      <div className="h-64 rounded-2xl bg-white/5 animate-pulse" />
     </div>
   );
+}
+
+export default function AddressesPage() {
+  return <AddressesClient />;
 }

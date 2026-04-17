@@ -4,17 +4,34 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import type { CartItem, Product } from "@/types/storefront.types";
 
+const CART_KEY = "oktava_cart";
+
+function loadCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCart(items: CartItem[]) {
+  localStorage.setItem(CART_KEY, JSON.stringify(items));
+}
+
 interface StorefrontCartContextValue {
   items: CartItem[];
   totalItems: number;
   totalAmount: number;
   isCartOpen: boolean;
+  hydrated: boolean;
   openCart: () => void;
   closeCart: () => void;
   addToCart: (product: Product) => void;
@@ -29,6 +46,18 @@ const StorefrontCartContext =
 export function StorefrontCartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Load from localStorage only on the client, after first render
+  useEffect(() => {
+    setItems(loadCart());
+    setHydrated(true);
+  }, []);
+
+  // Persist to localStorage whenever items change (skip before hydration)
+  useEffect(() => {
+    if (hydrated) saveCart(items);
+  }, [items, hydrated]);
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
@@ -80,7 +109,7 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
   const totalAmount = useMemo(
     () =>
       items.reduce(
-        (total, item) => total + item.quantity * item.product.price,
+        (total, item) => total + item.quantity * (item.product.price ?? 0),
         0,
       ),
     [items],
@@ -92,6 +121,7 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
       totalItems,
       totalAmount,
       isCartOpen,
+      hydrated,
       openCart,
       closeCart,
       addToCart,
@@ -99,7 +129,7 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
       removeFromCart,
       clearCart,
     }),
-    [items, totalItems, totalAmount, isCartOpen, openCart, closeCart, addToCart, decreaseQuantity, removeFromCart, clearCart],
+    [items, totalItems, totalAmount, isCartOpen, hydrated, openCart, closeCart, addToCart, decreaseQuantity, removeFromCart, clearCart],
   );
 
   return (

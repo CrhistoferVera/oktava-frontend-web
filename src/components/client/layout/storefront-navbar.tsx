@@ -23,7 +23,8 @@ function formatNavLinkClass(isActive: boolean) {
 
 export function StorefrontNavbar() {
   const pathname = usePathname();
-  const { totalItems, openCart } = useStorefrontCart();
+  const { totalItems, openCart, hydrated } = useStorefrontCart();
+  const cartBadge = hydrated && totalItems > 0;
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-md">
@@ -49,7 +50,7 @@ export function StorefrontNavbar() {
               aria-label="Carrito"
             >
               <ShoppingBag size={18} />
-              {totalItems > 0 && (
+              {cartBadge && (
                 <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 text-[11px] font-semibold text-white">
                   {totalItems}
                 </span>
@@ -84,7 +85,7 @@ export function StorefrontNavbar() {
             aria-label="Carrito"
           >
             <ShoppingBag size={18} />
-            {totalItems > 0 && (
+            {cartBadge && (
               <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 text-[11px] font-semibold text-white">
                 {totalItems}
               </span>

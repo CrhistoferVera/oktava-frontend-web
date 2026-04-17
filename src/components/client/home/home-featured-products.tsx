@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowRight, Flame } from "lucide-react";
 import { CustomerProductCard } from "@/components/client/product/customer-product-card";

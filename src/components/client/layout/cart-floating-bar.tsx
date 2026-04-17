@@ -8,9 +8,9 @@ function formatCurrency(value: number) {
 }
 
 export function CartFloatingBar() {
-  const { totalItems, totalAmount, openCart } = useStorefrontCart();
+  const { totalItems, totalAmount, openCart, hydrated } = useStorefrontCart();
 
-  if (totalItems === 0) return null;
+  if (!hydrated || totalItems === 0) return null;
 
   return (
     <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md">

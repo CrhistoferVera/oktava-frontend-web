@@ -1,28 +1,20 @@
-export type ProductCategoryId =
-  | "combos"
-  | "pollos"
-  | "guarniciones"
-  | "bebidas"
-  | "postres";
-
-export type ProductFilterCategory = ProductCategoryId | "all";
+export type ProductFilterCategory = string;
 
 export type ProductBadge = "Popular" | "Nuevo";
 
 export interface ProductCategory {
-  id: ProductCategoryId;
+  id: string;
+  slug: string;
   label: string;
-  description: string;
 }
 
 export interface Product {
   id: string;
   name: string;
-  description: string;
-  categoryId: ProductCategoryId;
-  price: number;
-  imageUrl: string;
-  prepTimeMinutes: number;
+  description: string | null;
+  categoryId: string;
+  price: number | null;
+  imageUrl: string | null;
   badge?: ProductBadge;
 }
 

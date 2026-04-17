@@ -5,7 +5,7 @@ import { CartFloatingBar } from "@/components/client/layout/cart-floating-bar";
 
 export function StorefrontShell({ children }: { readonly children: ReactNode }) {
   return (
-    <div className="relative min-h-screen bg-[#050505]">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-[#050505]">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 oktava-grid-bg opacity-40" />
         <div className="absolute left-1/2 top-[-240px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-red-600/25 blur-[150px]" />
