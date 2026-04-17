@@ -5,6 +5,7 @@ import {
   AdvancedMarker,
   Map,
   useMap,
+  useMapsLibrary,
   type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
 import { X, Search, Loader2 } from 'lucide-react';
@@ -102,7 +103,7 @@ export function AddressFormModal({ isOpen, initialData, isSaving, onClose, onSav
     return Object.keys(errs).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validate()) return;
     onSave({
@@ -290,27 +291,30 @@ export function AddressFormModal({ isOpen, initialData, isSaving, onClose, onSav
   );
 }
 
-// ─── Places Search (geocode on Enter or button click) ────────────────────────
+// ─── Places Autocomplete + fallback manual geocode ───────────────────────────
 interface PlacesAutocompleteProps {
   readonly hasError: boolean;
   readonly onSelect: (direction: string, lat: number, lng: number, placeId: string) => void;
 }
 
 function PlacesAutocomplete({ hasError, onSelect }: PlacesAutocompleteProps) {
-  const [query, setQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLElement | null>(null);
+  const onSelectRef = useRef(onSelect);
+  const places = useMapsLibrary('places');
   const [searching, setSearching] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  async function geocode() {
-    const text = query.trim();
-    if (!text || searching) return;
+  useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
+
+  // Core: geocode any address text and call onSelect with real coordinates
+  function geocodeAndSelect(address: string) {
+    if (!address.trim()) return;
     setSearching(true);
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: text }, (results, status) => {
+    new google.maps.Geocoder().geocode({ address }, (results, status) => {
       setSearching(false);
       if (status === 'OK' && results?.[0]) {
         const loc = results[0].geometry.location;
-        onSelect(
+        onSelectRef.current(
           results[0].formatted_address,
           loc.lat(),
           loc.lng(),
@@ -320,31 +324,66 @@ function PlacesAutocomplete({ hasError, onSelect }: PlacesAutocompleteProps) {
     });
   }
 
+  useEffect(() => {
+    if (!places || !containerRef.current) return;
+
+    const element = new (places as any).PlaceAutocompleteElement({
+      requestedLanguage: 'es',
+    }) as HTMLElement;
+
+    element.style.cssText = `
+      width: 100%;
+      --gmp-input-border-radius: 0.75rem;
+      --gmp-input-border-color: ${hasError ? 'rgb(239 68 68)' : 'rgb(63 63 70)'};
+      --gmp-input-padding: 0.625rem 1rem;
+      --gmp-input-background-color: rgb(24 24 27);
+      --gmp-input-font-size: 0.875rem;
+      --gmp-input-font-color: white;
+      --gmp-input-placeholder-font-color: rgb(82 82 91);
+    `;
+
+    containerRef.current.appendChild(element);
+    elementRef.current = element;
+
+    const handleSelect = async (event: Event) => {
+      const place = (event as any).place as google.maps.places.Place;
+      // Fetch minimal fields to get the address text
+      await place.fetchFields({ fields: ['formattedAddress', 'displayName'] });
+      const address = place.formattedAddress ?? place.displayName ?? '';
+      // Always geocode — guarantees real coordinates regardless of place.location
+      geocodeAndSelect(address);
+    };
+
+    element.addEventListener('gmp-placeselect', handleSelect);
+
+    return () => {
+      element.removeEventListener('gmp-placeselect', handleSelect);
+      element.remove();
+      elementRef.current = null;
+    };
+  }, [places]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleManualSearch() {
+    const value = elementRef.current?.querySelector('input')?.value ?? '';
+    geocodeAndSelect(value);
+  }
+
   return (
     <div className="space-y-1.5">
       <p className="text-xs font-medium text-zinc-400">Buscar dirección</p>
-      <div className="flex gap-2">
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), geocode())}
-          placeholder="Escribe tu dirección y presiona Enter o busca…"
-          className={`flex-1 rounded-xl border bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 transition ${
-            hasError ? 'border-red-500' : 'border-zinc-800 focus:border-red-500'
-          }`}
-        />
+      <div className="flex gap-2 items-start">
+        <div ref={containerRef} className="flex-1 min-w-0" />
         <button
           type="button"
-          onClick={geocode}
-          disabled={searching || !query.trim()}
+          onClick={handleManualSearch}
+          disabled={searching}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 transition hover:border-red-500 hover:text-red-400 disabled:opacity-40"
           aria-label="Buscar"
         >
           {searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
         </button>
       </div>
+      <p className="text-[11px] text-zinc-600">Selecciona una sugerencia o escribe y presiona la lupa</p>
     </div>
   );
 }
