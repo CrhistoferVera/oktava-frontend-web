@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useState, ReactNode, useEffect, useContext, useCallback } from 'react';
+import { createContext, useState, ReactNode, useEffect, useContext, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSession, removeSession } from '@/actions/auth'; // Importamos las actions
 import { User } from '@/types';
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         setUser(JSON.parse(userCookie));
       } catch (error) {
-        console.error("Error al parsear la cookie del usuario");
+        console.error("Error al parsear la cookie del usuario", error);
       }
     }
     setIsLoading(false);
@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = useCallback(async (token: string, userData: User) => {
     await createSession(token, userData); // Guarda las cookies en el servidor
     setUser(userData); // Actualiza el estado local
+    router.refresh();
     const redirectTo = userData.role === 'ADMIN' ? '/admin/dashboard' : '/menu';
     router.push(redirectTo);
   }, [router]);
@@ -57,8 +58,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/sign-in');
   }, [router]);
 
+  const value = useMemo(
+    () => ({ user, isAuthenticated: !!user, isLoading, login, logout }),
+    [user, isLoading, login, logout]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -14,20 +14,14 @@ export function validateProductForm(
     errors.description = 'La descripción es obligatoria.';
   }
 
-  if (!fields.category) {
-    errors.category = 'La categoría es obligatoria.';
+  if (!fields.categoryId) {
+    errors.categoryId = 'La categoría es obligatoria.';
   }
 
   if (!fields.price.trim()) {
     errors.price = 'El precio es obligatorio.';
   } else if (Number(fields.price) <= 0) {
     errors.price = 'El precio debe ser mayor que 0.';
-  }
-
-  if (!fields.stock.trim()) {
-    errors.stock = 'El stock es obligatorio.';
-  } else if (Number(fields.stock) < 0) {
-    errors.stock = 'El stock no puede ser negativo.';
   }
 
   if (!fields.status) {
@@ -38,24 +32,16 @@ export function validateProductForm(
     errors.imageUrl = 'La URL de imagen es obligatoria.';
   }
 
-  if (!fields.margin.trim()) {
-    errors.margin = 'El margen es obligatorio.';
-  } else if (Number(fields.margin) < 0) {
-    errors.margin = 'El margen no puede ser negativo.';
-  }
-
   return errors;
 }
 
 export function productToFormFields(product: Product): CreateProductFormFields {
   return {
     name: product.name,
-    description: product.description,
-    category: product.category,
-    price: String(product.price),
-    stock: String(product.stock),
+    description: product.description ?? '',
+    categoryId: product.categoryId,
+    price: String(product.price ?? ''),
     status: product.status,
-    imageUrl: product.imageUrl,
-    margin: String(product.margin),
+    imageUrl: product.imageUrl ?? '',
   };
 }

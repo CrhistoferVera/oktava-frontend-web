@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @theme {
   --font-roboto-condensed: var(--font-roboto-condensed), sans-serif;
 }

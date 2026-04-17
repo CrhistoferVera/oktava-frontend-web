@@ -1,23 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { ProductCategory, ProductStatus } from '@/types/product.types';
+import { useEffect, useState } from 'react';
+import { Category, ProductStatus } from '@/types/product.types';
 import {
   CreateProductFormErrors,
   CreateProductFormFields,
   CreateProductPayload,
   ProductFormMode,
 } from '@/types/product-form.types';
-import {
-  CATEGORY_OPTIONS,
-  INITIAL_FORM_FIELDS,
-  STATUS_OPTIONS,
-} from './product-form.constants';
+import { INITIAL_FORM_FIELDS, STATUS_OPTIONS } from './product-form.constants';
 import { validateProductForm } from './product-form.utils';
+import { ImageUpload } from './image-upload';
 
 type CreateProductFormProps = {
   mode: ProductFormMode;
+  categories: Category[];
   initialValues?: CreateProductFormFields;
+  isSaving?: boolean;
   onSubmit: (payload: CreateProductPayload) => void;
   onCancel: () => void;
 };
@@ -38,7 +37,9 @@ const SUBMIT_LABEL: Record<ProductFormMode, string> = {
 
 export function CreateProductForm({
   mode,
+  categories,
   initialValues,
+  isSaving = false,
   onSubmit,
   onCancel,
 }: CreateProductFormProps) {
@@ -47,8 +48,6 @@ export function CreateProductForm({
   );
   const [errors, setErrors] = useState<CreateProductFormErrors>({});
 
-  // Sync fields when initialValues changes (e.g. switching the product being edited).
-  // Also handles the first mount in edit mode without the single-render flash.
   useEffect(() => {
     setFields(initialValues ?? INITIAL_FORM_FIELDS);
     setErrors({});
@@ -78,12 +77,10 @@ export function CreateProductForm({
     const payload: CreateProductPayload = {
       name: fields.name.trim(),
       description: fields.description.trim(),
-      category: fields.category,
+      categoryId: fields.categoryId,
       price: Number(fields.price),
-      stock: Number(fields.stock),
-      status: fields.status,
       imageUrl: fields.imageUrl.trim(),
-      margin: Number(fields.margin),
+      isAvailable: fields.status === 'active',
     };
 
     onSubmit(payload);
@@ -101,6 +98,7 @@ export function CreateProductForm({
       noValidate
       className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2"
     >
+      {/* Nombre */}
       <div className="flex flex-col gap-2 md:col-span-2">
         <label className="text-sm font-medium text-zinc-300">
           Nombre del producto
@@ -112,11 +110,10 @@ export function CreateProductForm({
           placeholder="Ej. Pollo a la Brasa Clásico"
           className={fieldClass(!!errors.name)}
         />
-        {errors.name && (
-          <p className="text-xs text-red-400">{errors.name}</p>
-        )}
+        {errors.name && <p className="text-xs text-red-400">{errors.name}</p>}
       </div>
 
+      {/* Descripción */}
       <div className="flex flex-col gap-2 md:col-span-2">
         <label className="text-sm font-medium text-zinc-300">Descripción</label>
         <textarea
@@ -131,24 +128,27 @@ export function CreateProductForm({
         )}
       </div>
 
+      {/* Categoría — dinámica desde API */}
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-zinc-300">Categoría</label>
         <select
-          value={fields.category}
-          onChange={(e) => setField('category', e.target.value as ProductCategory)}
-          className={fieldClass(!!errors.category)}
+          value={fields.categoryId}
+          onChange={(e) => setField('categoryId', e.target.value)}
+          className={fieldClass(!!errors.categoryId)}
         >
-          {CATEGORY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          <option value="">Seleccionar categoría...</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
             </option>
           ))}
         </select>
-        {errors.category && (
-          <p className="text-xs text-red-400">{errors.category}</p>
+        {errors.categoryId && (
+          <p className="text-xs text-red-400">{errors.categoryId}</p>
         )}
       </div>
 
+      {/* Estado */}
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-zinc-300">Estado</label>
         <select
@@ -167,8 +167,9 @@ export function CreateProductForm({
         )}
       </div>
 
+      {/* Precio */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-300">Precio</label>
+        <label className="text-sm font-medium text-zinc-300">Precio (Bs.)</label>
         <input
           type="number"
           value={fields.price}
@@ -181,63 +182,35 @@ export function CreateProductForm({
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-300">Stock</label>
-        <input
-          type="number"
-          value={fields.stock}
-          onChange={(e) => setField('stock', e.target.value)}
-          placeholder="Ej. 12"
-          className={fieldClass(!!errors.stock)}
-        />
-        {errors.stock && (
-          <p className="text-xs text-red-400">{errors.stock}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-300">Margen (%)</label>
-        <input
-          type="number"
-          value={fields.margin}
-          onChange={(e) => setField('margin', e.target.value)}
-          placeholder="Ej. 65"
-          className={fieldClass(!!errors.margin)}
-        />
-        {errors.margin && (
-          <p className="text-xs text-red-400">{errors.margin}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-300">
-          URL de imagen
-        </label>
-        <input
-          type="text"
+      {/* Imagen */}
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <label className="text-sm font-medium text-zinc-300">Imagen del producto</label>
+        <ImageUpload
           value={fields.imageUrl}
-          onChange={(e) => setField('imageUrl', e.target.value)}
-          placeholder="https://..."
-          className={fieldClass(!!errors.imageUrl)}
+          disabled={isSaving}
+          onChange={(url) => setField('imageUrl', url)}
         />
         {errors.imageUrl && (
           <p className="text-xs text-red-400">{errors.imageUrl}</p>
         )}
       </div>
 
+      {/* Acciones */}
       <div className="flex items-center justify-end gap-4 pt-4 md:col-span-2">
         <button
           type="button"
           onClick={handleCancel}
-          className="rounded-2xl border border-zinc-800 px-5 py-3 font-medium text-zinc-300 transition hover:bg-zinc-900"
+          disabled={isSaving}
+          className="rounded-2xl border border-zinc-800 px-5 py-3 font-medium text-zinc-300 transition hover:bg-zinc-900 disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="rounded-2xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-700"
+          disabled={isSaving}
+          className="rounded-2xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
         >
-          {SUBMIT_LABEL[mode]}
+          {isSaving ? 'Guardando...' : SUBMIT_LABEL[mode]}
         </button>
       </div>
     </form>

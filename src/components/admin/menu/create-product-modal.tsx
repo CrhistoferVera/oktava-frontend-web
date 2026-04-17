@@ -1,3 +1,4 @@
+import { Category } from '@/types/product.types';
 import {
   CreateProductFormFields,
   CreateProductPayload,
@@ -8,7 +9,9 @@ import { CreateProductForm } from './create-product-form';
 type CreateProductModalProps = {
   isOpen: boolean;
   mode: ProductFormMode;
+  categories: Category[];
   initialValues?: CreateProductFormFields;
+  isSaving?: boolean;
   onClose: () => void;
   onSubmit: (payload: CreateProductPayload) => void;
 };
@@ -27,7 +30,9 @@ const MODAL_COPY: Record<ProductFormMode, { title: string; subtitle: string }> =
 export function CreateProductModal({
   isOpen,
   mode,
+  categories,
   initialValues,
+  isSaving = false,
   onClose,
   onSubmit,
 }: CreateProductModalProps) {
@@ -35,7 +40,6 @@ export function CreateProductModal({
 
   function handleSubmit(payload: CreateProductPayload) {
     onSubmit(payload);
-    onClose();
   }
 
   const { title, subtitle } = MODAL_COPY[mode];
@@ -52,7 +56,8 @@ export function CreateProductModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900"
+            disabled={isSaving}
+            className="rounded-xl border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900 disabled:opacity-50"
           >
             Cerrar
           </button>
@@ -60,7 +65,9 @@ export function CreateProductModal({
 
         <CreateProductForm
           mode={mode}
+          categories={categories}
           initialValues={initialValues}
+          isSaving={isSaving}
           onSubmit={handleSubmit}
           onCancel={onClose}
         />

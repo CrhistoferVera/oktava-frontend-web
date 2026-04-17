@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_ROUTES = ['/', '/menu'];
 const AUTH_PAGES = ['/sign-in', '/sign-up'];
 const PROTECTED_PREFIXES = ['/orders', '/admin', '/profile', '/addresses'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
   const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
-  const isPublic =
-    PUBLIC_ROUTES.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
   // Rutas protegidas sin token → login
   if (isProtected && !token) {
