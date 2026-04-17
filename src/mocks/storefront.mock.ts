@@ -7,26 +7,31 @@ import type {
 export const storefrontCategories: ProductCategory[] = [
   {
     id: "combos",
+    slug: "combos",
     label: "Combos",
     description: "Packs para compartir y resolver la comida completa.",
   },
   {
     id: "pollos",
+    slug: "pollos",
     label: "Pollos",
     description: "Cortes y porciones con la receta signature Oktava.",
   },
   {
     id: "guarniciones",
+    slug: "guarniciones",
     label: "Guarniciones",
     description: "Acompanamientos crocantes y de alta rotacion.",
   },
   {
     id: "bebidas",
+    slug: "bebidas",
     label: "Bebidas",
     description: "Refrescos frios para cualquier pedido.",
   },
   {
     id: "postres",
+    slug: "postres",
     label: "Postres",
     description: "Cierre dulce para el combo perfecto.",
   },

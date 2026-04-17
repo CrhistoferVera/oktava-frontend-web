@@ -6,6 +6,7 @@ export interface ProductCategory {
   id: string;
   slug: string;
   label: string;
+  description?: string;
 }
 
 export interface Product {
@@ -16,6 +17,7 @@ export interface Product {
   price: number | null;
   imageUrl: string | null;
   badge?: ProductBadge;
+  prepTimeMinutes?: number;
 }
 
 export interface CartItem {
