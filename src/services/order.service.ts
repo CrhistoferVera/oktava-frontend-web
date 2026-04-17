@@ -13,4 +13,9 @@ export const orderService = {
     const { data } = await api.get<Order[]>('/orders/my');
     return data;
   },
+
+  async confirmReceived(id: string): Promise<Order> {
+    const { data } = await api.patch<Order>(`/orders/${id}/confirm-received`);
+    return data;
+  },
 };

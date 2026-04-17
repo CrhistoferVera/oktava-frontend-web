@@ -439,8 +439,8 @@ export default function CheckoutClient() {
           </div>
 
           {/* Right column — Order summary */}
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-white/8 bg-white/3 p-5 space-y-4 lg:sticky lg:top-24">
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-2xl border border-white/8 bg-white/3 p-5 space-y-4">
               <p className="text-sm font-semibold text-white">Resumen del pedido</p>
 
               {/* Items */}

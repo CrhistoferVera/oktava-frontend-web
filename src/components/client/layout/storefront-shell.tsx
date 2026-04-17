@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { StorefrontNavbar } from "@/components/client/layout/storefront-navbar";
 import { CartDrawer } from "@/components/client/layout/cart-drawer";
 import { CartFloatingBar } from "@/components/client/layout/cart-floating-bar";
+import { ActiveOrdersDrawer } from "@/components/client/layout/active-orders-drawer";
 
 export function StorefrontShell({ children }: { readonly children: ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export function StorefrontShell({ children }: { readonly children: ReactNode }) 
 
       <CartFloatingBar />
       <CartDrawer />
+      <ActiveOrdersDrawer />
     </div>
   );
 }
