@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import { UserCircle2, User, MapPin, LogOut, ChevronDown } from "lucide-react";
+import { UserCircle2, User, MapPin, LogOut, ChevronDown, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export function UserMenuDropdown() {
@@ -86,6 +86,21 @@ export function UserMenuDropdown() {
               <MapPin size={15} className="text-zinc-500" />
               Mis direcciones
             </Link>
+            {user.phoneVerified ? (
+              <span className="flex items-center gap-3 px-4 py-2.5 text-sm text-green-500 cursor-default select-none">
+                <ShieldCheck size={15} />
+                WhatsApp verificado
+              </span>
+            ) : (
+              <Link
+                href="/verify-phone"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-yellow-400 transition-colors hover:bg-yellow-500/10 hover:text-yellow-300"
+              >
+                <ShieldAlert size={15} />
+                Verificar WhatsApp
+              </Link>
+            )}
           </div>
 
           <div className="border-t border-white/8 py-1.5">

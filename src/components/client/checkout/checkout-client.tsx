@@ -18,6 +18,7 @@ import {
 import dynamic from "next/dynamic";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
+import { useAuth } from "@/context/AuthContext";
 import { addressService } from "@/services/address.service";
 import { orderService } from "@/services/order.service";
 import type { Address, AddressPayload } from "@/types/address.types";
@@ -71,6 +72,7 @@ type Step = "checkout" | "payment" | "success";
 
 export default function CheckoutClient() {
   const router = useRouter();
+  const { user } = useAuth();
   const { items, totalAmount, clearCart } = useStorefrontCart();
 
   const [orderType, setOrderType] = useState<"DELIVERY" | "PICKUP">("DELIVERY");
@@ -128,6 +130,10 @@ export default function CheckoutClient() {
 
   function handleProceed() {
     setError(null);
+    if (!user?.phoneVerified) {
+      router.push("/verify-phone?redirect=/checkout");
+      return;
+    }
     if (orderType === "DELIVERY" && !selectedAddressId) {
       setError("Selecciona una dirección de entrega.");
       return;

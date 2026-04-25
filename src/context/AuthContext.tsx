@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, userData: User) => Promise<void>;
+  login: (token: string, userData: User, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -43,12 +43,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Iniciar sesión
-  const login = useCallback(async (token: string, userData: User) => {
-    await createSession(token, userData); // Guarda las cookies en el servidor
-    setUser(userData); // Actualiza el estado local
+  const login = useCallback(async (token: string, userData: User, redirectTo?: string) => {
+    await createSession(token, userData);
+    setUser(userData);
     router.refresh();
-    const redirectTo = userData.role === 'ADMIN' ? '/admin/dashboard' : '/menu';
-    router.push(redirectTo);
+    const destination = redirectTo ?? (userData.role === 'ADMIN' ? '/admin/dashboard' : '/menu');
+    router.push(destination);
   }, [router]);
 
   // Cerrar sesión

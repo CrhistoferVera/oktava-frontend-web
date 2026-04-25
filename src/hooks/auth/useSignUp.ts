@@ -3,11 +3,12 @@
 import { useState, useRef } from 'react';
 import { isPasswordValid } from '@/components/ui/PasswordRequirements';
 import { authService } from '@/services/auth.service';
+import type { AuthResponse } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 
 type FormSubmit = { preventDefault(): void };
 
-export type SignUpStep = 'form' | 'verify';
+export type SignUpStep = 'form' | 'verify' | 'phone-prompt';
 
 export const useSignUp = () => {
   const [firstName, setFirstName] = useState('');
@@ -23,10 +24,11 @@ export const useSignUp = () => {
   const [code, setCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pendingAuthRef = useRef<AuthResponse | null>(null);
 
   const { login } = useAuth();
 
-  // ─── Step 1: validate form + send verification email ─────────────────────
+  // ─── Step 1: validate form + send email OTP ────────────────────────────────
   const handleSendCode = async (e: FormSubmit) => {
     e.preventDefault();
     setError(null);
@@ -56,7 +58,7 @@ export const useSignUp = () => {
     }
   };
 
-  // ─── Step 2: verify code + create account ────────────────────────────────
+  // ─── Step 2: verify email OTP + create account → phone prompt ─────────────
   const handleVerifyAndRegister = async (e: FormSubmit) => {
     e.preventDefault();
     if (code.length !== 6) { setError('Ingresa el código de 6 dígitos'); return; }
@@ -64,7 +66,8 @@ export const useSignUp = () => {
     setIsLoading(true);
     try {
       const data = await authService.signup({ email, firstName, lastName, password, phone, verificationCode: code });
-      login(data.accessToken, data.user);
+      pendingAuthRef.current = data;
+      setStep('phone-prompt');
     } catch (err: any) {
       setError(err.response?.data?.message ?? 'Código incorrecto o expirado.');
     } finally {
@@ -72,7 +75,21 @@ export const useSignUp = () => {
     }
   };
 
-  // ─── Resend ───────────────────────────────────────────────────────────────
+  // ─── Step 3a: verify phone now ─────────────────────────────────────────────
+  const handleGoVerifyPhone = () => {
+    const data = pendingAuthRef.current;
+    if (!data) return;
+    login(data.accessToken, data.user, '/verify-phone?redirect=/menu');
+  };
+
+  // ─── Step 3b: skip phone verification ─────────────────────────────────────
+  const handleSkipPhone = () => {
+    const data = pendingAuthRef.current;
+    if (!data) return;
+    login(data.accessToken, data.user);
+  };
+
+  // ─── Resend email OTP ──────────────────────────────────────────────────────
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     setError(null);
@@ -101,7 +118,6 @@ export const useSignUp = () => {
   const goBack = () => { setStep('form'); setCode(''); setError(null); };
 
   return {
-    // form fields
     firstName, setFirstName,
     lastName, setLastName,
     email, setEmail,
@@ -109,13 +125,12 @@ export const useSignUp = () => {
     password, setPassword,
     confirmPassword, setConfirmPassword,
     acceptedTerms, setAcceptedTerms,
-    // otp
     code, setCode,
-    // state
     step, error, isLoading, resendCooldown,
-    // handlers
     handleSendCode,
     handleVerifyAndRegister,
+    handleGoVerifyPhone,
+    handleSkipPhone,
     handleResend,
     goBack,
   };

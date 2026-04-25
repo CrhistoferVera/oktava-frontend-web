@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
-    const redirectPath = userData.role === 'ADMIN' ? '/admin/dashboard' : '/menu';
+    let redirectPath = '/menu';
+    if (userData.role === 'ADMIN') redirectPath = '/admin/dashboard';
+    else if (!userData.phone?.trim()) redirectPath = '/complete-profile';
     return NextResponse.redirect(new URL(redirectPath, request.url));
   } catch {
     return NextResponse.redirect(new URL('/sign-in', request.url));

@@ -8,15 +8,17 @@ import { GoogleButton } from './GoogleButton';
 import Link from 'next/link';
 import { PasswordInput } from '../ui/PasswordInput';
 import { PasswordRequirements } from '../ui/PasswordRequirements';
+import { PhoneInput } from '../ui/PhoneInput';
 import { TermsCheckbox } from './TermsCheckBox';
 import { useSignUp } from '@/hooks/auth/useSignUp';
-import { ArrowLeft, Mail, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Mail, MessageCircle, RotateCcw, ShieldCheck, X } from 'lucide-react';
 
 export const SignUpForm = () => {
   const router = useRouter();
   const {
     acceptedTerms, confirmPassword, email, error, firstName,
     handleSendCode, handleVerifyAndRegister, handleResend,
+    handleGoVerifyPhone, handleSkipPhone,
     isLoading, lastName, password, phone, step, code, setCode,
     setConfirmPassword, setEmail, setFirstName,
     setLastName, setPassword, setPhone, setAcceptedTerms,
@@ -79,6 +81,54 @@ export const SignUpForm = () => {
       </div>
     </div>
   );
+
+  // ─── Step 3: Phone prompt ───────────────────────────────────────────────────
+  if (step === 'phone-prompt') {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center px-6">
+        <div className="pointer-events-none fixed inset-0 oktava-grid-bg opacity-20" />
+        <div className="pointer-events-none fixed left-1/2 -top-50 h-120 w-120 -translate-x-1/2 rounded-full bg-red-600/20 blur-[130px]" />
+
+        <div className="relative w-full max-w-sm space-y-6 text-center">
+          <div className="grid h-16 w-16 mx-auto place-items-center rounded-2xl bg-green-500/10 border border-green-500/30">
+            <ShieldCheck size={28} className="text-green-400" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-3xl text-white [font-family:var(--font-display)] uppercase">
+              ¡Cuenta creada!
+            </h1>
+            <p className="text-sm text-zinc-400">
+              ¿Querés verificar tu número de WhatsApp ahora? Esto te permite recibir actualizaciones de tus pedidos.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleGoVerifyPhone}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-900/30 transition hover:bg-green-500"
+            >
+              <MessageCircle size={16} />
+              Verificar por WhatsApp
+            </button>
+            <button
+              type="button"
+              onClick={handleSkipPhone}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/10 py-3 text-sm font-medium text-zinc-400 transition hover:bg-white/5 hover:text-white"
+            >
+              <X size={14} />
+              Omitir por ahora
+            </button>
+          </div>
+
+          <p className="text-[11px] text-zinc-600">
+            Podrás verificarlo más tarde desde tu perfil.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Step 2: OTP ────────────────────────────────────────────────────────────
   if (step === 'verify') {
@@ -216,9 +266,13 @@ export const SignUpForm = () => {
               <Input label="Correo electrónico" id="email" type="email" placeholder="tu@ejemplo.com"
                 value={email} onChange={(e) => setEmail(e.target.value)}
                 required maxLength={254} disabled={isLoading} />
-              <Input label="Número de teléfono" id="phoneNumber" type="tel" placeholder="+591 70000000"
-                value={phone} onChange={(e) => setPhone(e.target.value)}
-                required maxLength={20} disabled={isLoading} />
+              <PhoneInput
+                id="phoneNumber"
+                label="Número de teléfono"
+                value={phone}
+                onChange={setPhone}
+                disabled={isLoading}
+              />
               <div className="grid grid-cols-2 gap-3">
                 <PasswordInput label="Contraseña" id="password" value={password}
                   onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••"

@@ -15,4 +15,16 @@ export const authService = {
     const { data } = await api.post<AuthResponse>('/auth/sign-up', userData);
     return data;
   },
+
+  updateProfile: async (phone: string) => {
+    await api.patch('/auth/profile', { phone });
+  },
+
+  sendPhoneVerification: async () => {
+    await api.post('/auth/send-phone-verification');
+  },
+
+  verifyPhone: async (code: string) => {
+    await api.post('/auth/verify-phone', { code });
+  },
 };
