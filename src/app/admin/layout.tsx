@@ -18,6 +18,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (!pathname.startsWith("/admin")) return;
     if (isLoading) return;
     if (!user) {
       router.replace("/sign-in");
