@@ -1,12 +1,20 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ShieldCheck, RotateCcw } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 import { useAuth } from '@/context/AuthContext';
 
 export default function VerifyPhonePage() {
+  return (
+    <Suspense>
+      <VerifyPhoneContent />
+    </Suspense>
+  );
+}
+
+function VerifyPhoneContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/menu';
