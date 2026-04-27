@@ -33,7 +33,11 @@ export async function GET(request: NextRequest) {
     let redirectPath = '/menu';
     if (userData.role === 'ADMIN') redirectPath = '/admin/dashboard';
     else if (!userData.phone?.trim()) redirectPath = '/complete-profile';
-    return NextResponse.redirect(new URL(redirectPath, request.url));
+
+    const proto = request.headers.get('x-forwarded-proto') ?? 'http';
+    const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? 'localhost:3000';
+    const baseUrl = `${proto}://${host}`;
+    return NextResponse.redirect(new URL(redirectPath, baseUrl));
   } catch {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
