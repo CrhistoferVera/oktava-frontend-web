@@ -3,66 +3,57 @@
 import { Check, X } from 'lucide-react';
 
 export interface PasswordValidation {
-    minLength: boolean;
-    hasUppercase: boolean;
-    hasLowercase: boolean;
-    hasNumber: boolean;
-    hasSpecialChar: boolean;
+  minLength: boolean;
+  hasLetter: boolean;
+  hasNumber: boolean;
 }
 
 interface PasswordRequirementsProps {
-    password: string;
-    show?: boolean;
+  password: string;
+  show?: boolean;
 }
 
 export function validatePassword(password: string): PasswordValidation {
-    return {
-        minLength: password.length >= 8,
-        hasUppercase: /[A-Z]/.test(password),
-        hasLowercase: /[a-z]/.test(password),
-        hasNumber: /[0-9]/.test(password),
-        hasSpecialChar: /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;']/.test(password),
-    };
+  return {
+    minLength: password.length >= 8,
+    hasLetter: /[a-zA-Z]/.test(password),
+    hasNumber: /\d/.test(password),
+  };
 }
 
 export function isPasswordValid(password: string): boolean {
-    const validation = validatePassword(password);
-    return Object.values(validation).every(Boolean);
+  return Object.values(validatePassword(password)).every(Boolean);
 }
 
 export function PasswordRequirements({ password, show = true }: PasswordRequirementsProps) {
-    if (!show) return null;
+  if (!show) return null;
 
-    const validation = validatePassword(password);
+  const v = validatePassword(password);
 
-    const requirements = [
-        { key: 'minLength', label: 'Al menos 8 caracteres', valid: validation.minLength },
-        { key: 'hasUppercase', label: 'Una letra mayuscula', valid: validation.hasUppercase },
-        { key: 'hasLowercase', label: 'Una letra minuscula', valid: validation.hasLowercase },
-        { key: 'hasNumber', label: 'Un numero', valid: validation.hasNumber },
-        { key: 'hasSpecialChar', label: 'Un caracter especial (!@#$%...)', valid: validation.hasSpecialChar },
-    ];
+  const requirements = [
+    { key: 'minLength', label: 'Al menos 8 caracteres', valid: v.minLength },
+    { key: 'hasLetter',  label: 'Al menos una letra',    valid: v.hasLetter  },
+    { key: 'hasNumber',  label: 'Al menos un número',    valid: v.hasNumber  },
+  ];
 
-    return (
-        <div className="bg-[#0a1929]/50 border border-gray-700/50 rounded-lg p-4 space-y-2">
-            <p className="text-sm text-gray-400 font-medium mb-3">Requisitos de la contraseña:</p>
-            <div className="grid grid-cols-1 gap-2">
-                {requirements.map((req) => (
-                    <div
-                        key={req.key}
-                        className={`flex items-center gap-2 text-sm transition-colors ${
-                            req.valid ? 'text-emerald-400' : 'text-gray-500'
-                        }`}
-                    >
-                        {req.valid ? (
-                            <Check className="w-4 h-4 flex-shrink-0" />
-                        ) : (
-                            <X className="w-4 h-4 flex-shrink-0" />
-                        )}
-                        <span>{req.label}</span>
-                    </div>
-                ))}
-            </div>
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 space-y-1.5">
+      <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest mb-2">
+        Requisitos
+      </p>
+      {requirements.map((req) => (
+        <div
+          key={req.key}
+          className={`flex items-center gap-2 text-sm transition-colors ${
+            req.valid ? 'text-green-400' : 'text-zinc-600'
+          }`}
+        >
+          {req.valid
+            ? <Check className="w-3.5 h-3.5 shrink-0" />
+            : <X     className="w-3.5 h-3.5 shrink-0" />}
+          <span>{req.label}</span>
         </div>
-    );
+      ))}
+    </div>
+  );
 }
