@@ -6,6 +6,7 @@ export interface User{
     firstName: string;
     lastName: string;
     phone: string;
+    phoneVerified: boolean;
     isActive: boolean;
     role: string;
 }

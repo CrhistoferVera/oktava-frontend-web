@@ -157,7 +157,13 @@ export default function CheckoutClient() {
       clearCart();
       setStep("success");
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? "Ocurrió un error al crear el pedido.");
+      const code = e?.response?.data?.code;
+      const message = e?.response?.data?.message ?? "Ocurrió un error al crear el pedido.";
+      setError(
+        code === 'PHONE_NOT_VERIFIED'
+          ? "Debes verificar tu número de teléfono antes de realizar un pedido. Contacta con soporte o actualiza tu perfil."
+          : message,
+      );
       setStep("checkout");
     } finally {
       setIsSubmitting(false);
