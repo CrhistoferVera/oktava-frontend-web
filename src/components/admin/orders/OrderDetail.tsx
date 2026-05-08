@@ -208,7 +208,7 @@ export const OrderDetail = ({ order, onStatusChange }: Props) => {
           {/* Header: número, hora, badges */}
           <div className="px-5 py-1 pb-2 border-b border-gray-800 flex justify-between items-center">
             <div className="flex flex-col">
-              <p className="text-red-700 font-bold font-roboto-condensed text-4xl">{order.orderNumber}</p>
+              <p className="text-red-700 font-bold font-roboto-condensed text-3xl">{order.orderNumber}</p>
               <p className="text-sm text-gray-700">Hoy {hora}</p>
             </div>
             <div className="flex flex-col gap-2 items-end">
