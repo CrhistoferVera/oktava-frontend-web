@@ -95,6 +95,9 @@ function VerifyPhoneContent() {
     }
   }
 
+  if(!user?.phone){
+    router.push("/complete-profile?redirect=/verify-phone");
+  }
   const phone = user?.phone ?? '';
   const maskedPhone = phone.length > 4
     ? phone.slice(0, -4).replace(/\d/g, '•') + phone.slice(-4)

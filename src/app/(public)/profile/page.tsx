@@ -55,7 +55,7 @@ export default function ProfilePage() {
             <p className="text-sm text-zinc-400 truncate">{user.email}</p>
             <div className="flex items-center gap-1.5 pt-0.5">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-              <span className="text-xs text-zinc-500">Cuenta activa</span>
+              <span className="text-xs text-zinc-500">{user.isActive ? "Cuenta activa" : "Cuenta inactiva"}</span>
             </div>
           </div>
         </div>

@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Phone } from 'lucide-react';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { authService } from '@/services/auth.service';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CompleteProfilePage() {
   const router = useRouter();
+  const { user, updateUser } = useAuth();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') ?? '/menu';
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,13 +26,17 @@ export default function CompleteProfilePage() {
     setIsLoading(true);
     try {
       await authService.updateProfile(phone);
-      router.push('/menu');
+      await updateUser({ phone });
+      router.push(redirect);
     } catch (err: any) {
       setError(err.response?.data?.message ?? 'No se pudo guardar el número.');
     } finally {
       setIsLoading(false);
     }
   }
+  useEffect(() => {
+    if (user?.phone) router.push('/menu');
+  }, [user?.phone, router]);
 
   return (
     <div className="min-h-screen bg-[#050505] flex items-center justify-center px-6">
@@ -45,7 +53,7 @@ export default function CompleteProfilePage() {
             Un paso más
           </h1>
           <p className="text-sm text-zinc-400 max-w-xs mx-auto">
-            Necesitamos tu número de teléfono para que puedas recibir notificaciones de tu pedido.
+            Necesitamos tu número de teléfono para poder contactarnos contigo.
           </p>
         </div>
 
@@ -76,7 +84,7 @@ export default function CompleteProfilePage() {
         <button
           type="button"
           onClick={() => router.push('/menu')}
-          className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+          className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
         >
           Omitir por ahora
         </button>

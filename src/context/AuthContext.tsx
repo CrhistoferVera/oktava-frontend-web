@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, userData: User, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (partial: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,9 +58,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/sign-in');
   }, [router]);
 
+  // Actualizar datos del usuario en estado y cookie sin re-autenticar
+  const updateUser = useCallback(async (partial: Partial<User>) => {
+    if (!user) return;
+    const token = getCookie('token') ?? '';
+    const updated = { ...user, ...partial };
+    await createSession(token, updated);
+    setUser(updated);
+  }, [user]);
+
   const value = useMemo(
-    () => ({ user, isAuthenticated: !!user, isLoading, login, logout }),
-    [user, isLoading, login, logout]
+    () => ({ user, isAuthenticated: !!user, isLoading, login, logout, updateUser }),
+    [user, isLoading, login, logout, updateUser]
   );
 
   return (
