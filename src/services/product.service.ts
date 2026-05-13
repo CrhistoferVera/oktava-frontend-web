@@ -19,7 +19,7 @@ export const productService = {
   },
 
   getProducts: async (): Promise<Product[]> => {
-    const { data } = await api.get<Product[]>('/products');
+    const { data } = await api.get<Product[]>('/products/admin');
     return data;
   },
 
