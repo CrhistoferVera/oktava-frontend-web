@@ -27,4 +27,12 @@ export const authService = {
   verifyPhone: async (code: string) => {
     await api.post('/auth/verify-phone', { code });
   },
+
+  forgotPassword: async (email: string): Promise<void> => {
+    await api.post('/auth/forgot-password', { email });
+  },
+
+  resetPassword: async (email: string, code: string, newPassword: string): Promise<void> => {
+    await api.post('/auth/reset-password', { email, code, newPassword });
+  },
 };
