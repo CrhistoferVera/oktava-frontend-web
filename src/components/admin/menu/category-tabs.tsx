@@ -43,7 +43,7 @@ export function MenuCategoryTabs({
             key={cat.id}
             type="button"
             onClick={() => onCategoryChange(cat.id)}
-            className={`shrink-0 rounded-2xl border px-6 py-3.5 text-lg font-semibold transition ${
+            className={`shrink-0 rounded-2xl border px-6 py-2 text-lg font-semibold transition ${
               activeCategory === cat.id
                 ? 'border-red-600 bg-red-600 text-white'
                 : 'border-zinc-800 bg-zinc-900 text-white hover:border-zinc-700 hover:bg-zinc-800'
