@@ -108,7 +108,7 @@ export const AdminSideBar = ({ isOpen, onClose }: SidebarProps) => {
   return (
     <>
       {/* Desktop: sidebar fijo */}
-      <div className="hidden md:flex bg-[#161616] flex-col text-white w-[15%] h-screen sticky top-0 overflow-hidden shrink-0">
+      <div className="hidden md:flex bg-[#161616] flex-col text-white w-[15%] h-screen fixed top-0 left-0 overflow-hidden">
         {content}
       </div>
 

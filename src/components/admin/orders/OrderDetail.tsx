@@ -247,6 +247,16 @@ export const OrderDetail = ({ order, onStatusChange }: Props) => {
             <OrderSummary subtotal={order.subtotal} deliveryFee={order.deliveryFee} total={order.total} />
           </div>
 
+          {/* Nota del cliente */}
+          {order.notes && (
+            <div className="px-5 py-3 border-b border-gray-800 text-[12px]">
+              <p className="text-gray-700 font-bold pb-0.5">NOTA:</p>
+              <div className="bg-gray-600/20 rounded-lg border border-gray-800 px-3 py-2 text-gray-300">
+                {order.notes}
+              </div>
+            </div>
+          )}
+
           {/* Acciones contextuales */}
           {onStatusChange && <ActionButtons order={order} onStatusChange={onStatusChange} />}
         </div>

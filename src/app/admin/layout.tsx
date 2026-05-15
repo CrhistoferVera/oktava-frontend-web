@@ -41,7 +41,7 @@ export default function AdminLayout({
 
       <AdminSideBar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto md:ml-[15%]">
         {/* Topbar móvil */}
         <div className="md:hidden fixed top-0 left-0 right-0 z-20 bg-[#161616] border-b border-gray-800 flex items-center px-4 h-14">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-400 hover:text-white">
