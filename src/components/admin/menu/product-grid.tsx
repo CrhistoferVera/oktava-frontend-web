@@ -3,12 +3,13 @@ import { Product } from '@/types/product.types';
 
 type ProductGridProps = {
   products: Product[];
-  deletingId: string | null;
+  busyId: string | null;
   onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
+  onToggleStatus: (product: Product) => void;
+  onHardDelete: (product: Product) => void;
 };
 
-export function ProductGrid({ products, deletingId, onEdit, onDelete }: ProductGridProps) {
+export function ProductGrid({ products, busyId, onEdit, onToggleStatus, onHardDelete }: Readonly<ProductGridProps>) {
   if (products.length === 0) {
     return (
       <div className="flex min-h-70 flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900 px-6 py-12 text-center">
@@ -26,9 +27,10 @@ export function ProductGrid({ products, deletingId, onEdit, onDelete }: ProductG
         <ProductCard
           key={product.id}
           product={product}
-          isDeleting={deletingId === product.id}
+          isBusy={busyId === product.id}
           onEdit={onEdit}
-          onDelete={onDelete}
+          onToggleStatus={onToggleStatus}
+          onHardDelete={onHardDelete}
         />
       ))}
     </div>

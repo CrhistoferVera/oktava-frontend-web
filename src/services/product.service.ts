@@ -63,7 +63,16 @@ export const productService = {
     return data;
   },
 
+  toggleProductStatus: async (id: string, isAvailable: boolean): Promise<Product> => {
+    const { data } = await api.patch<Product>(`/products/${id}`, { isAvailable });
+    return data;
+  },
+
   deleteProduct: async (id: string): Promise<void> => {
     await api.delete(`/products/${id}`);
+  },
+
+  permanentlyDeleteProduct: async (id: string): Promise<void> => {
+    await api.delete(`/products/${id}/permanently`);
   },
 };

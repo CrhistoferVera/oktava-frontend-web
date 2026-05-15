@@ -142,22 +142,33 @@ export default function MenuPage() {
     }
   }
 
-  async function handleDeleteProduct(product: Product) {
-    if (!window.confirm(`¿Desactivar "${product.name}"? El producto quedará inactivo.`)) {
-      return;
-    }
+  async function handleToggleStatus(product: Product) {
+    const isActive = product.status === 'active';
+    const action = isActive ? 'desactivar' : 'activar';
+    if (!window.confirm(`¿${action.charAt(0).toUpperCase() + action.slice(1)} "${product.name}"?`)) return;
 
     try {
       setDeletingId(product.id);
       setError(null);
-      await productService.deleteProduct(product.id);
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === product.id ? { ...p, status: 'inactive', isAvailable: false } : p,
-        ),
-      );
+      const updated = await productService.toggleProductStatus(product.id, !isActive);
+      setProducts((prev) => prev.map((p) => (p.id === product.id ? updated : p)));
     } catch {
-      setError('No se pudo desactivar el producto. Intenta de nuevo.');
+      setError(`No se pudo ${action} el producto. Intenta de nuevo.`);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleHardDelete(product: Product) {
+    if (!window.confirm(`¿Eliminar permanentemente "${product.name}"? Esta acción no se puede deshacer.`)) return;
+
+    try {
+      setDeletingId(product.id);
+      setError(null);
+      await productService.permanentlyDeleteProduct(product.id);
+      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+    } catch {
+      setError('No se pudo eliminar el producto. Intenta de nuevo.');
     } finally {
       setDeletingId(null);
     }
@@ -202,9 +213,10 @@ export default function MenuPage() {
         <MenuMetrics products={filteredProducts} />
         <ProductGrid
           products={filteredProducts}
-          deletingId={deletingId}
+          busyId={deletingId}
           onEdit={openEditModal}
-          onDelete={handleDeleteProduct}
+          onToggleStatus={handleToggleStatus}
+          onHardDelete={handleHardDelete}
         />
       </div>
 

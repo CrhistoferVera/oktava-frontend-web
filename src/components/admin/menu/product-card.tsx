@@ -1,14 +1,15 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, PowerOff, Power } from 'lucide-react';
 import { Product } from '@/types/product.types';
 
 type ProductCardProps = {
   product: Product;
-  isDeleting?: boolean;
+  isBusy?: boolean;
   onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
+  onToggleStatus: (product: Product) => void;
+  onHardDelete: (product: Product) => void;
 };
 
-export function ProductCard({ product, isDeleting = false, onEdit, onDelete }: ProductCardProps) {
+export function ProductCard({ product, isBusy = false, onEdit, onToggleStatus, onHardDelete }: Readonly<ProductCardProps>) {
   const isActive = product.status === 'active';
 
   return (
@@ -64,7 +65,7 @@ export function ProductCard({ product, isDeleting = false, onEdit, onDelete }: P
           <button
             type="button"
             onClick={() => onEdit(product)}
-            disabled={isDeleting}
+            disabled={isBusy}
             className="flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-400 transition hover:border-zinc-500 hover:text-white disabled:opacity-50"
           >
             <Pencil size={14} />
@@ -73,12 +74,26 @@ export function ProductCard({ product, isDeleting = false, onEdit, onDelete }: P
 
           <button
             type="button"
-            onClick={() => onDelete(product)}
-            disabled={isDeleting}
+            onClick={() => onToggleStatus(product)}
+            disabled={isBusy}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
+              isActive
+                ? 'border-zinc-700 text-zinc-400 hover:border-amber-700 hover:text-amber-400'
+                : 'border-zinc-700 text-zinc-400 hover:border-emerald-700 hover:text-emerald-400'
+            }`}
+          >
+            {isActive ? <PowerOff size={14} /> : <Power size={14} />}
+            {isActive ? 'Desactivar' : 'Activar'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onHardDelete(product)}
+            disabled={isBusy}
             className="flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-400 transition hover:border-red-700 hover:text-red-400 disabled:opacity-50"
           >
             <Trash2 size={14} />
-            {isDeleting ? 'Eliminando...' : 'Desactivar'}
+            Eliminar
           </button>
         </div>
       </div>
