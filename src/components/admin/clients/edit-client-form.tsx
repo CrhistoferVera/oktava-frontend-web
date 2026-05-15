@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { EditClientFormFields, UpdateClientPayload } from '@/types/client.types';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 
 type FormErrors = Partial<Record<keyof EditClientFormFields, string>>;
 
@@ -114,17 +115,15 @@ export function EditClientForm({
 
       {/* Teléfono */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-300">
+        <span className="text-sm font-medium text-zinc-300">
           Teléfono{' '}
           <span className="font-normal text-zinc-500">(opcional)</span>
-        </label>
-        <input
-          type="text"
+        </span>
+        <PhoneInput
           value={fields.phone}
-          onChange={(e) => setField('phone', e.target.value)}
-          placeholder="Ej. +591 765-4321"
+          onChange={(val) => setField('phone', val)}
           disabled={isSaving}
-          className={inputNormal}
+          label=""
         />
       </div>
 
