@@ -5,6 +5,7 @@ export const mockProducts: Product[] = [
     id: "1",
     name: "Pollo a la Brasa Clásico",
     description: "Pollo entero crocante con receta especial de la casa.",
+    includes: null,
     category: "Pollos",
     categoryId: "cat-pollos",
     price: 98,
@@ -12,6 +13,7 @@ export const mockProducts: Product[] = [
     isAvailable: true,
     imageUrl:
       "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=1200&auto=format&fit=crop",
+    optionGroups: [],
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   },
@@ -19,6 +21,7 @@ export const mockProducts: Product[] = [
     id: "2",
     name: "1/4 de Pollo",
     description: "Porción personal acompañada de guarnición a elección.",
+    includes: null,
     category: "Pollos",
     categoryId: "cat-pollos",
     price: 32,
@@ -26,6 +29,7 @@ export const mockProducts: Product[] = [
     isAvailable: true,
     imageUrl:
       "https://images.unsplash.com/photo-1518492104633-130d0cc84637?q=80&w=1200&auto=format&fit=crop",
+    optionGroups: [],
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   },
@@ -33,6 +37,7 @@ export const mockProducts: Product[] = [
     id: "3",
     name: "Papas Fritas Familiares",
     description: "Papas crujientes ideales para compartir.",
+    includes: null,
     category: "Guarniciones",
     categoryId: "cat-guarniciones",
     price: 18,
@@ -40,6 +45,7 @@ export const mockProducts: Product[] = [
     isAvailable: true,
     imageUrl:
       "https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=1200&auto=format&fit=crop",
+    optionGroups: [],
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   },
@@ -47,6 +53,7 @@ export const mockProducts: Product[] = [
     id: "4",
     name: "Inca Kola 2L",
     description: "Bebida gaseosa tradicional peruana.",
+    includes: null,
     category: "Bebidas",
     categoryId: "cat-bebidas",
     price: 14,
@@ -54,6 +61,7 @@ export const mockProducts: Product[] = [
     isAvailable: false,
     imageUrl:
       "https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=1200&auto=format&fit=crop",
+    optionGroups: [],
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   },

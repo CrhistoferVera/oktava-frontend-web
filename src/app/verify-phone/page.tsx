@@ -18,7 +18,7 @@ function VerifyPhoneContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/menu';
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [step, setStep] = useState<'send' | 'otp'>('send');
   const [code, setCode] = useState('');
@@ -87,6 +87,7 @@ function VerifyPhoneContent() {
     setIsLoading(true);
     try {
       await authService.verifyPhone(code);
+      await updateUser({ phoneVerified: true });
       router.push(redirect);
     } catch (err: any) {
       setError(err.response?.data?.message ?? 'Código incorrecto o expirado.');

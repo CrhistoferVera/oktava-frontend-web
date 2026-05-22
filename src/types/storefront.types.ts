@@ -14,6 +14,7 @@ export interface StorefrontOptionItem {
   name: string;
   extraPrice: number;
   isAvailable: boolean;
+  imageUrl: string | null;
 }
 
 export interface StorefrontOptionGroup {

@@ -19,7 +19,7 @@ export const productService = {
     const formData = new FormData();
     formData.append('file', file);
     const { data } = await api.post<{ url: string }>('/products/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
     return data.url;
   },

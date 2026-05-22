@@ -28,6 +28,7 @@ interface ApiOptionItem {
   extraPrice: number;
   isAvailable: boolean;
   sortOrder: number;
+  imageUrl: string | null;
 }
 
 interface ApiOptionGroup {
@@ -53,7 +54,7 @@ interface ApiProduct {
 }
 
 function mapOptionItem(o: ApiOptionItem): StorefrontOptionItem {
-  return { id: o.id, name: o.name, extraPrice: o.extraPrice, isAvailable: o.isAvailable };
+  return { id: o.id, name: o.name, extraPrice: o.extraPrice, isAvailable: o.isAvailable, imageUrl: o.imageUrl ?? null };
 }
 
 function mapOptionGroup(g: ApiOptionGroup): StorefrontOptionGroup {

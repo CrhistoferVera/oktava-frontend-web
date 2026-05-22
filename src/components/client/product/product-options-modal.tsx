@@ -2,16 +2,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Plus } from "lucide-react";
+import { X, ShoppingCart, Check, ArrowLeft } from "lucide-react";
 import type {
   Product,
   SelectedOptionGroup,
   SelectedOptionItem,
   StorefrontOptionGroup,
+  StorefrontOptionItem,
 } from "@/types/storefront.types";
 
-const PLACEHOLDER =
+const PRODUCT_PLACEHOLDER =
   "https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=800&auto=format&fit=crop";
+
+const OPTION_PLACEHOLDER =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&auto=format&fit=crop";
 
 interface ProductOptionsModalProps {
   readonly product: Product;
@@ -25,11 +29,135 @@ function formatCurrency(value: number) {
 }
 
 function groupLabel(group: StorefrontOptionGroup): string {
-  if (group.maxSelections === 1) return "Elige 1";
+  if (group.maxSelections === 1) return "Elige 1 opción";
   if (group.maxSelections === group.minSelections)
-    return `Elige exactamente ${group.maxSelections}`;
+    return `Elige ${group.maxSelections} opciones`;
   return `Elige hasta ${group.maxSelections}`;
 }
+
+function groupHasImages(group: StorefrontOptionGroup): boolean {
+  return group.options.some((o) => o.imageUrl);
+}
+
+function cardVariantClass(isSelected: boolean, isDisabled: boolean): string {
+  if (isSelected) return "border-red-500 shadow-lg shadow-red-900/20 bg-red-500/8";
+  if (isDisabled) return "border-white/5 opacity-35 cursor-not-allowed";
+  return "border-white/10 hover:border-white/25 hover:bg-white/4";
+}
+
+function rowVariantClass(isSelected: boolean, isDisabled: boolean): string {
+  if (isSelected) return "border-red-500 bg-red-500/10";
+  if (isDisabled) return "border-white/5 cursor-not-allowed opacity-35";
+  return "border-white/8 bg-white/3 hover:border-white/20 hover:bg-white/5";
+}
+
+// ─── Card option (con imagen) ─────────────────────────────────────────────────
+
+function OptionCard({
+  option,
+  isSelected,
+  isDisabled,
+  isSingleSelect,
+  onToggle,
+}: Readonly<{
+  option: StorefrontOptionItem;
+  isSelected: boolean;
+  isDisabled: boolean;
+  isSingleSelect: boolean;
+  onToggle: () => void;
+}>) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={isDisabled}
+      className={[
+        "group relative flex flex-col overflow-hidden rounded-2xl border text-left transition-all duration-200",
+        cardVariantClass(isSelected, isDisabled),
+      ].join(" ")}
+    >
+      {/* Imagen */}
+      <div className="relative w-full overflow-hidden bg-zinc-900" style={{ aspectRatio: "4/3" }}>
+        <img
+          src={option.imageUrl ?? OPTION_PLACEHOLDER}
+          alt={option.name}
+          className={[
+            "h-full w-full object-cover transition-transform duration-300",
+            isDisabled ? "" : "group-hover:scale-105",
+          ].join(" ")}
+        />
+        {isSelected && <div className="absolute inset-0 bg-red-500/15" />}
+        <div
+          className={[
+            "absolute right-2.5 top-2.5 grid h-7 w-7 place-items-center border-2 shadow-lg transition-all",
+            isSingleSelect ? "rounded-full" : "rounded-lg",
+            isSelected
+              ? "border-red-500 bg-red-500 text-white"
+              : "border-white/40 bg-black/50 backdrop-blur-sm",
+          ].join(" ")}
+        >
+          {isSelected && <Check size={14} strokeWidth={3} />}
+        </div>
+      </div>
+
+      {/* Etiqueta */}
+      <div className={["px-3 py-2.5 transition-colors", isSelected ? "bg-red-500/10" : ""].join(" ")}>
+        <p className="text-sm font-semibold leading-snug text-white">{option.name}</p>
+        {option.extraPrice > 0 ? (
+          <p className="mt-0.5 text-xs font-bold text-red-400">+{formatCurrency(option.extraPrice)}</p>
+        ) : (
+          <p className="mt-0.5 text-xs text-zinc-500">Incluido</p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ─── Row option (sin imagen) ──────────────────────────────────────────────────
+
+function OptionRow({
+  option,
+  isSelected,
+  isDisabled,
+  isSingleSelect,
+  onToggle,
+}: Readonly<{
+  option: StorefrontOptionItem;
+  isSelected: boolean;
+  isDisabled: boolean;
+  isSingleSelect: boolean;
+  onToggle: () => void;
+}>) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={isDisabled}
+      className={[
+        "flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all",
+        rowVariantClass(isSelected, isDisabled),
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "grid h-5 w-5 shrink-0 place-items-center border-2 transition-all",
+          isSingleSelect ? "rounded-full" : "rounded-md",
+          isSelected ? "border-red-500 bg-red-500" : "border-zinc-600",
+        ].join(" ")}
+      >
+        {isSelected && <Check size={10} strokeWidth={3} className="text-white" />}
+      </span>
+      <span className="flex-1 text-base font-medium text-zinc-100">{option.name}</span>
+      {option.extraPrice > 0 && (
+        <span className="shrink-0 text-sm font-bold text-red-400">
+          +{formatCurrency(option.extraPrice)}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ─── Modal principal ──────────────────────────────────────────────────────────
 
 export function ProductOptionsModal({
   product,
@@ -37,13 +165,9 @@ export function ProductOptionsModal({
   onClose,
   onConfirm,
 }: ProductOptionsModalProps) {
-  // Map of groupId → Set of selected optionIds
-  const [selections, setSelections] = useState<Map<string, Set<string>>>(
-    new Map(),
-  );
+  const [selections, setSelections] = useState<Map<string, Set<string>>>(new Map());
   const [errors, setErrors] = useState<Set<string>>(new Set());
 
-  // Reset selections each time the modal opens
   useEffect(() => {
     if (isOpen) {
       setSelections(new Map());
@@ -53,30 +177,21 @@ export function ProductOptionsModal({
 
   if (!isOpen) return null;
 
-  // ─── Selection helpers ──────────────────────────────────────────────────────
-
   function toggleOption(group: StorefrontOptionGroup, optionId: string) {
     setSelections((prev) => {
       const next = new Map(prev);
       const current = new Set(next.get(group.id) ?? []);
-
       if (group.maxSelections === 1) {
-        // Radio: replace selection
         next.set(group.id, new Set([optionId]));
       } else if (current.has(optionId)) {
-        // Uncheck
         current.delete(optionId);
         next.set(group.id, current);
       } else if (current.size < group.maxSelections) {
-        // Check (only if under limit)
         current.add(optionId);
         next.set(group.id, current);
       }
-
       return next;
     });
-
-    // Clear error for this group when user interacts
     setErrors((prev) => {
       const next = new Set(prev);
       next.delete(group.id);
@@ -84,34 +199,23 @@ export function ProductOptionsModal({
     });
   }
 
-  // ─── Computed values ────────────────────────────────────────────────────────
-
   const extraPrice = product.optionGroups
-    .flatMap((g) =>
-      g.options.filter((o) => selections.get(g.id)?.has(o.id)),
-    )
+    .flatMap((g) => g.options.filter((o) => selections.get(g.id)?.has(o.id)))
     .reduce((sum, o) => sum + o.extraPrice, 0);
 
   const totalPrice = (product.price ?? 0) + extraPrice;
 
-  // ─── Validation & submit ────────────────────────────────────────────────────
-
   function handleConfirm() {
     const newErrors = new Set<string>();
     for (const group of product.optionGroups) {
-      if (group.isRequired) {
-        const count = selections.get(group.id)?.size ?? 0;
-        if (count < group.minSelections) {
-          newErrors.add(group.id);
-        }
+      if (group.isRequired && (selections.get(group.id)?.size ?? 0) < group.minSelections) {
+        newErrors.add(group.id);
       }
     }
-
     if (newErrors.size > 0) {
       setErrors(newErrors);
       return;
     }
-
     const selectedGroups: SelectedOptionGroup[] = product.optionGroups
       .map((group) => {
         const selectedIds = selections.get(group.id) ?? new Set<string>();
@@ -121,174 +225,195 @@ export function ProductOptionsModal({
         return { groupId: group.id, groupName: group.name, items };
       })
       .filter((g) => g.items.length > 0);
-
     onConfirm(selectedGroups);
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
+    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-[#0f0f0f] md:flex-row">
 
-      {/* Panel */}
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] max-w-lg flex-col overflow-hidden rounded-t-3xl bg-[#0f0f0f] shadow-2xl md:inset-0 md:m-auto md:rounded-3xl md:max-h-[85dvh]">
-        {/* Product hero */}
-        <div className="relative h-48 w-full shrink-0 overflow-hidden md:h-56">
+      {/* ── Panel izquierdo: info del producto ───────────────────────────────── */}
+      <div className="relative flex shrink-0 flex-col md:w-[42%]">
+
+        {/* Imagen de fondo — panel completo en desktop */}
+        <div className="relative h-56 overflow-hidden md:absolute md:inset-0 md:h-auto">
           <img
-            src={product.imageUrl ?? PLACEHOLDER}
+            src={product.imageUrl ?? PRODUCT_PLACEHOLDER}
             alt={product.name}
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-[#0f0f0f] via-[#0f0f0f]/40 to-transparent md:via-[#0f0f0f]/10" />
+        </div>
+
+        {/* Botón volver — mobile */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Volver"
+          className="absolute left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-black/70 md:hidden"
+        >
+          <ArrowLeft size={15} />
+          Volver
+        </button>
+
+        {/* Info del producto — desktop: sobre la imagen al fondo */}
+        <div className="relative z-10 px-7 pb-8 pt-4 md:absolute md:bottom-0 md:left-0 md:right-0 md:pt-0">
+          <p className="mb-2 hidden text-xs font-bold uppercase tracking-widest text-red-400 md:block">
+            Personaliza tu pedido
+          </p>
+          <h2 className="text-2xl font-bold leading-tight text-white md:text-4xl">
+            {product.name}
+          </h2>
+          {product.price != null && (
+            <p className="mt-1 text-base font-semibold text-white/60 md:text-lg">
+              Desde {formatCurrency(product.price)}
+            </p>
+          )}
+          {product.description && (
+            <p className="mt-2 hidden text-sm leading-relaxed text-white/50 md:block md:text-base">
+              {product.description}
+            </p>
+          )}
+          {product.includes && (
+            <div className="mt-3 hidden rounded-xl border border-white/10 bg-black/30 px-4 py-2.5 backdrop-blur-sm md:block">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Incluye</p>
+              <p className="mt-0.5 text-sm text-zinc-300">{product.includes}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Panel derecho: opciones ───────────────────────────────────────────── */}
+      <div className="flex flex-1 flex-col overflow-hidden border-t border-white/8 bg-[#111111] md:border-l md:border-t-0">
+
+        {/* Header del panel — desktop */}
+        <div className="hidden shrink-0 items-center justify-between border-b border-white/8 px-8 py-5 md:flex">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+              {product.optionGroups.length === 1
+                ? "1 grupo de opciones"
+                : `${product.optionGroups.length} grupos de opciones`}
+            </p>
+            <h3 className="mt-0.5 text-xl font-bold text-white">
+              {product.optionGroups[0]?.name ?? "Opciones"}
+            </h3>
+          </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
+            className="grid h-10 w-10 place-items-center rounded-full text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
           >
-            <X size={16} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 pb-2 pt-4">
-          {/* Name & price */}
-          <div className="mb-1 flex items-start justify-between gap-3">
-            <h2 className="text-xl font-bold leading-tight text-white">
-              {product.name}
-            </h2>
-            <span className="shrink-0 text-lg font-bold text-white">
-              {product.price == null ? "—" : formatCurrency(product.price)}
-            </span>
-          </div>
-
-          {product.description && (
-            <p className="mb-3 text-sm leading-relaxed text-zinc-400">
-              {product.description}
-            </p>
-          )}
-
-          {product.includes && (
-            <div className="mb-4 rounded-xl border border-white/8 bg-white/4 px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Incluye
-              </p>
-              <p className="mt-0.5 text-sm text-zinc-300">{product.includes}</p>
-            </div>
-          )}
-
-          {/* Option groups */}
-          <div className="flex flex-col gap-5 pb-2">
+        {/* Opciones scrollables */}
+        <div className="flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-7">
+          <div className="flex flex-col gap-8">
             {product.optionGroups.map((group) => {
               const selectedIds = selections.get(group.id) ?? new Set<string>();
               const hasError = errors.has(group.id);
               const isSingleSelect = group.maxSelections === 1;
+              const useCards = groupHasImages(group);
 
               return (
                 <div key={group.id}>
-                  {/* Group header */}
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-white">{group.name}</p>
-                      {group.isRequired && (
-                        <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
+                  {/* Cabecera del grupo */}
+                  <div className="mb-4 flex items-baseline justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <h4 className="text-base font-bold text-white md:text-lg">{group.name}</h4>
+                      {group.isRequired ? (
+                        <span className="rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
                           Requerido
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                          Opcional
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-zinc-500">{groupLabel(group)}</span>
+                    <span className="shrink-0 text-xs text-zinc-500">{groupLabel(group)}</span>
                   </div>
 
                   {hasError && (
-                    <p className="mb-2 text-xs text-red-400">
-                      Debes seleccionar al menos {group.minSelections} opción.
-                    </p>
+                    <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-400">
+                      <span>⚠</span>
+                      <span>Selecciona al menos {group.minSelections} opción para continuar.</span>
+                    </div>
                   )}
 
-                  {/* Options */}
-                  <div className="flex flex-col gap-1.5">
-                    {group.options.map((option) => {
-                      const isSelected = selectedIds.has(option.id);
-                      const isDisabled =
-                        !isSingleSelect &&
-                        !isSelected &&
-                        selectedIds.size >= group.maxSelections;
-
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => toggleOption(group, option.id)}
-                          disabled={isDisabled}
-                          className={[
-                            "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition",
-                            isSelected
-                              ? "border-red-500 bg-red-500/10 text-white"
-                              : isDisabled
-                                ? "border-white/5 bg-white/2 text-zinc-600 cursor-not-allowed"
-                                : "border-white/10 bg-white/3 text-zinc-200 hover:border-white/25 hover:bg-white/6",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-center gap-3">
-                            {/* Indicator */}
-                            <span
-                              className={[
-                                "grid h-5 w-5 shrink-0 place-items-center",
-                                isSingleSelect
-                                  ? "rounded-full border-2"
-                                  : "rounded-md border-2",
-                                isSelected
-                                  ? "border-red-500 bg-red-500"
-                                  : "border-zinc-600",
-                              ].join(" ")}
-                            >
-                              {isSelected && (
-                                <span className="block h-2 w-2 rounded-full bg-white" />
-                              )}
-                            </span>
-                            <span className="text-sm font-medium">{option.name}</span>
-                          </div>
-                          {option.extraPrice > 0 && (
-                            <span className="text-sm font-semibold text-red-400">
-                              +{formatCurrency(option.extraPrice)}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {/* Cards con imagen */}
+                  {useCards ? (
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {group.options.map((option) => {
+                        const isSelected = selectedIds.has(option.id);
+                        const isDisabled =
+                          !isSingleSelect && !isSelected && selectedIds.size >= group.maxSelections;
+                        return (
+                          <OptionCard
+                            key={option.id}
+                            option={option}
+                            isSelected={isSelected}
+                            isDisabled={isDisabled}
+                            isSingleSelect={isSingleSelect}
+                            onToggle={() => toggleOption(group, option.id)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* Filas sin imagen */
+                    <div className="flex flex-col gap-2">
+                      {group.options.map((option) => {
+                        const isSelected = selectedIds.has(option.id);
+                        const isDisabled =
+                          !isSingleSelect && !isSelected && selectedIds.size >= group.maxSelections;
+                        return (
+                          <OptionRow
+                            key={option.id}
+                            option={option}
+                            isSelected={isSelected}
+                            isDisabled={isDisabled}
+                            isSingleSelect={isSingleSelect}
+                            onToggle={() => toggleOption(group, option.id)}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Sticky footer */}
-        <div className="shrink-0 border-t border-white/8 px-5 pb-6 pt-4">
+        {/* Footer sticky: precio + botón */}
+        <div className="shrink-0 border-t border-white/8 bg-[#111111] px-5 pb-8 pt-4 md:px-8 md:pb-6">
           {extraPrice > 0 && (
-            <p className="mb-2 text-center text-xs text-zinc-500">
-              Precio base{" "}
-              <span className="text-zinc-300">{formatCurrency(product.price ?? 0)}</span>
-              {" + extras "}
-              <span className="text-red-400">{formatCurrency(extraPrice)}</span>
-            </p>
+            <div className="mb-3 flex items-center justify-center gap-3 text-sm text-zinc-500">
+              <span>
+                Base{" "}
+                <span className="font-semibold text-zinc-300">
+                  {formatCurrency(product.price ?? 0)}
+                </span>
+              </span>
+              <span className="text-zinc-700">+</span>
+              <span>
+                Extras{" "}
+                <span className="font-bold text-red-400">{formatCurrency(extraPrice)}</span>
+              </span>
+            </div>
           )}
           <button
             type="button"
             onClick={handleConfirm}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/30 transition hover:bg-red-500 hover:scale-[1.01] active:scale-100"
+            className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-red-600 py-4 text-base font-bold text-white shadow-xl shadow-red-900/30 transition hover:bg-red-500 active:scale-[0.98]"
           >
-            <Plus size={16} />
+            <ShoppingCart size={19} />
             Agregar al carrito &mdash; {formatCurrency(totalPrice)}
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

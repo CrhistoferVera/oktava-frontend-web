@@ -8,6 +8,7 @@ export type OptionFormItem = {
   name: string;
   extraPrice: string;
   isAvailable: boolean;
+  imageUrl: string;
 };
 
 export type OptionGroupFormField = {
@@ -38,6 +39,7 @@ export type CreateOptionPayload = {
   name: string;
   extraPrice?: number;
   isAvailable: boolean;
+  imageUrl?: string;
 };
 
 export type CreateOptionGroupPayload = {

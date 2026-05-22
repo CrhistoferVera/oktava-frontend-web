@@ -15,6 +15,7 @@ export type OptionItem = {
   extraPrice: number;
   isAvailable: boolean;
   sortOrder: number;
+  imageUrl: string | null;
 };
 
 export type OptionGroup = {

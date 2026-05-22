@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Category, ProductStatus } from '@/types/product.types';
+import { productService } from '@/services/product.service';
 import {
   CreateProductFormErrors,
   CreateProductFormFields,
@@ -39,8 +40,97 @@ const SUBMIT_LABEL: Record<ProductFormMode, string> = {
   edit: 'Actualizar producto',
 };
 
+function OptionImageUpload({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (url: string) => void;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function openPicker() {
+    inputRef.current?.click();
+  }
+
+  async function handleFile(file: File) {
+    setError(null);
+    setIsUploading(true);
+    try {
+      const url = await productService.uploadImage(file);
+      onChange(url);
+    } catch {
+      setError('Error al subir');
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) handleFile(f);
+    e.target.value = '';
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-1">
+      {value ? (
+        <div className="group relative h-16 w-16 overflow-hidden rounded-xl border border-zinc-700">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="" className="h-full w-full object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            disabled={disabled}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/70 text-[10px] font-medium text-white opacity-0 transition group-hover:opacity-100"
+            aria-label="Quitar imagen"
+          >
+            <span>✕</span>
+            <span>Quitar</span>
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={openPicker}
+          disabled={disabled || isUploading}
+          className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-zinc-700 text-zinc-500 transition hover:border-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300 disabled:opacity-50"
+          aria-label="Añadir imagen a la opción"
+          title="Añadir imagen"
+        >
+          {isUploading ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-600 border-t-red-500" />
+          ) : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <span className="text-[9px] font-medium">Foto</span>
+            </>
+          )}
+        </button>
+      )}
+      {error && <p className="text-[9px] leading-none text-red-400">{error}</p>}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+        onChange={handleInputChange}
+        disabled={disabled || isUploading}
+      />
+    </div>
+  );
+}
+
 function emptyOption(): OptionFormItem {
-  return { _key: crypto.randomUUID(), name: '', extraPrice: '0', isAvailable: true };
+  return { _key: crypto.randomUUID(), name: '', extraPrice: '0', isAvailable: true, imageUrl: '' };
 }
 
 function emptyGroup(): OptionGroupFormField {
@@ -153,6 +243,7 @@ export function CreateProductForm({
               ...(Number(o.extraPrice) > 0 && { extraPrice: Number(o.extraPrice) }),
               isAvailable: o.isAvailable,
               sortOrder: oi,
+              ...(o.imageUrl.trim() && { imageUrl: o.imageUrl.trim() }),
             })),
         })),
       }),
@@ -381,52 +472,73 @@ export function CreateProductForm({
             </div>
 
             {/* Lista de opciones */}
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-zinc-500">Opciones</span>
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Opciones</span>
 
               {group.options.map((opt, oi) => (
-                <div key={opt._key} className="flex items-center gap-2">
-                  <input
-                    id={`io-${gi}-${oi}-name`}
-                    type="text"
-                    value={opt.name}
-                    onChange={(e) => updateOption(gi, oi, { name: e.target.value })}
-                    placeholder="Nombre de la opción"
-                    aria-label="Nombre de la opción"
-                    className={`${inputSm} flex-1`}
+                <div key={opt._key} className="flex gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
+                  {/* Imagen */}
+                  <OptionImageUpload
+                    value={opt.imageUrl}
+                    disabled={isSaving}
+                    onChange={(url) => updateOption(gi, oi, { imageUrl: url })}
                   />
-                  <input
-                    id={`io-${gi}-${oi}-price`}
-                    type="number"
-                    value={opt.extraPrice}
-                    onChange={(e) => updateOption(gi, oi, { extraPrice: e.target.value })}
-                    placeholder="+ Bs."
-                    aria-label="Precio extra en bolivianos"
-                    min={0}
-                    className="w-20 rounded-xl border border-zinc-700 bg-zinc-900 px-2 py-2 text-center text-sm text-white outline-none"
-                  />
-                  <label
-                    htmlFor={`io-${gi}-${oi}-avail`}
-                    className="flex cursor-pointer items-center gap-1 text-xs text-zinc-400"
-                  >
-                    <input
-                      id={`io-${gi}-${oi}-avail`}
-                      type="checkbox"
-                      checked={opt.isAvailable}
-                      onChange={(e) => updateOption(gi, oi, { isAvailable: e.target.checked })}
-                      className="accent-red-500"
-                    />
-                    <span>Activo</span>
-                  </label>
-                  {group.options.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(gi, oi)}
-                      className="rounded-lg px-2 py-1 text-xs text-zinc-500 transition hover:text-red-400"
-                    >
-                      ✕
-                    </button>
-                  )}
+
+                  {/* Campos */}
+                  <div className="flex flex-1 flex-col gap-2">
+                    {/* Fila 1: nombre + eliminar */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        id={`io-${gi}-${oi}-name`}
+                        type="text"
+                        value={opt.name}
+                        onChange={(e) => updateOption(gi, oi, { name: e.target.value })}
+                        placeholder="Nombre de la opción"
+                        aria-label="Nombre de la opción"
+                        className={`${inputSm} flex-1`}
+                      />
+                      {group.options.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeOption(gi, oi)}
+                          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-zinc-600 transition hover:bg-zinc-800 hover:text-red-400"
+                          aria-label="Eliminar opción"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Fila 2: precio + activo */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-500">+Bs.</span>
+                        <input
+                          id={`io-${gi}-${oi}-price`}
+                          type="number"
+                          value={opt.extraPrice}
+                          onChange={(e) => updateOption(gi, oi, { extraPrice: e.target.value })}
+                          placeholder="0"
+                          aria-label="Precio extra en bolivianos"
+                          min={0}
+                          className="w-20 rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-center text-sm text-white outline-none"
+                        />
+                      </div>
+                      <label
+                        htmlFor={`io-${gi}-${oi}-avail`}
+                        className="flex cursor-pointer items-center gap-1.5 text-xs text-zinc-400"
+                      >
+                        <input
+                          id={`io-${gi}-${oi}-avail`}
+                          type="checkbox"
+                          checked={opt.isAvailable}
+                          onChange={(e) => updateOption(gi, oi, { isAvailable: e.target.checked })}
+                          className="accent-red-500"
+                        />
+                        <span>Activo</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               ))}
 

@@ -56,6 +56,7 @@ export function productToFormFields(product: Product): CreateProductFormFields {
         name: o.name,
         extraPrice: String(o.extraPrice),
         isAvailable: o.isAvailable,
+        imageUrl: o.imageUrl ?? '',
       })),
     })),
   };
