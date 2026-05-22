@@ -1,4 +1,4 @@
-import { CheckCircle, Hourglass, ScanSearch, Truck, XCircle } from 'lucide-react'
+import { CheckCircle, Hourglass, ScanSearch, Truck, XCircle, Zap } from 'lucide-react'
 import { OrderStatus } from '@/types'
 
 export const FILTER_STATUS_MAP: Record<string, OrderStatus | null> = {
@@ -12,6 +12,7 @@ export const FILTER_STATUS_MAP: Record<string, OrderStatus | null> = {
 
 const filters: { name: string; icon?: React.ReactNode }[] = [
   { name: 'Todos' },
+  { name: 'Activos',    icon: <Zap         size={16} color="#22c55e" /> },
   { name: 'Pendientes', icon: <Hourglass   size={16} color="orange" /> },
   { name: 'Preparando', icon: <ScanSearch  size={16} color="blue"   /> },
   { name: 'En camino',  icon: <Truck       size={16} color="red"    /> },

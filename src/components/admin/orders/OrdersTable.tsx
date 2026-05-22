@@ -116,6 +116,18 @@ function QuickActionCell({ order, onStatusChange }: {
   );
 }
 
+// ─── Date helper ─────────────────────────────────────────────────────────────
+
+function isToday(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth()    === now.getMonth()    &&
+    d.getDate()     === now.getDate()
+  );
+}
+
 // ─── Row styling ──────────────────────────────────────────────────────────────
 
 function rowClass(isSelected: boolean, status: OrderStatus, createdAt: string): string {
@@ -137,7 +149,7 @@ const columnHelper = createColumnHelper<Order>();
 export const OrdersTable = ({ orders, loading, onStatusChange, autoSelectedOrderId }: Props) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [activeFilter, setActiveFilter] = useState('Todos');
+  const [activeFilter, setActiveFilter] = useState('Activos');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const autoSelectConsumedRef = useRef<string | null>(null);
 
@@ -159,20 +171,30 @@ export const OrdersTable = ({ orders, loading, onStatusChange, autoSelectedOrder
     });
   }, [autoSelectedOrderId, orders]);
 
+  // Base: only today's orders (active + inactive)
+  const baseOrders = useMemo(
+    () => orders.filter(o => isToday(o.createdAt)),
+    [orders],
+  );
+
   const filteredOrders = useMemo(() => {
+    if (activeFilter === 'Activos') {
+      return baseOrders.filter(o => o.status !== 'CANCELLED' && o.status !== 'COMPLETED');
+    }
     const statusFilter = FILTER_STATUS_MAP[activeFilter];
-    return statusFilter === null ? orders : orders.filter(o => o.status === statusFilter);
-  }, [orders, activeFilter]);
+    return statusFilter === null ? baseOrders : baseOrders.filter(o => o.status === statusFilter);
+  }, [baseOrders, activeFilter]);
 
   const filterCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const counts: Record<string, number> = { Todos: baseOrders.length };
+    counts['Activos'] = baseOrders.filter(
+      o => o.status !== 'CANCELLED' && o.status !== 'COMPLETED',
+    ).length;
     Object.entries(FILTER_STATUS_MAP).forEach(([label, status]) => {
-      counts[label] = status === null
-        ? orders.length
-        : orders.filter(o => o.status === status).length;
+      if (status !== null) counts[label] = baseOrders.filter(o => o.status === status).length;
     });
     return counts;
-  }, [orders]);
+  }, [baseOrders]);
 
   const columns = useMemo(() => [
     columnHelper.accessor('orderNumber', {

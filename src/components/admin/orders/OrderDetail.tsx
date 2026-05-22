@@ -165,6 +165,72 @@ function AddressActions({ address }: { readonly address: NonNullable<Order['addr
   );
 }
 
+// ─── StatusStepper ───────────────────────────────────────────────────────────
+
+const STEP_INDEX: Partial<Record<OrderStatus, number>> = {
+  PENDING:    0,
+  PREPARING:  1,
+  ON_THE_WAY: 2,
+  PICKED_UP:  2,
+  COMPLETED:  3,
+};
+
+function stepClass(isCurrent: boolean, isDone: boolean): string {
+  if (isCurrent) return 'bg-red-600 text-white';
+  if (isDone) return 'border border-green-700 text-green-400';
+  return 'border border-zinc-800 text-zinc-600';
+}
+
+function StatusStepper({ status, orderType }: { readonly status: OrderStatus; readonly orderType: OrderType }) {
+  if (status === 'CANCELLED') {
+    return (
+      <div className="px-6 py-3 border-b border-zinc-800">
+        <div className="flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-800/60 px-4 py-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Pedido cancelado</span>
+        </div>
+      </div>
+    );
+  }
+
+  const steps = orderType === 'DELIVERY'
+    ? ['Recibido', 'Preparando', 'En camino', 'Entregado']
+    : ['Recibido', 'Preparando', 'Para recoger', 'Entregado'];
+
+  const current = STEP_INDEX[status] ?? 0;
+
+  return (
+    <div className="px-6 py-3 border-b border-zinc-800">
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Estado del pedido</p>
+      <div className="flex items-center">
+        {steps.flatMap((step, i) => {
+          const isDone = i < current;
+          const isCurrent = i === current;
+          const stepEl = (
+            <span
+              key={step}
+              className={[
+                'flex-1 text-center rounded-lg px-1.5 py-1.5 text-[11px] font-bold transition-colors',
+                stepClass(isCurrent, isDone),
+              ].join(' ')}
+            >
+              {step}
+            </span>
+          );
+          if (i < steps.length - 1) {
+            return [stepEl, (
+              <div
+                key={`after-${step}`}
+                className={`h-px w-2.5 shrink-0 ${isDone ? 'bg-green-700' : 'bg-zinc-800'}`}
+              />
+            )];
+          }
+          return [stepEl];
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── InfoRow ──────────────────────────────────────────────────────────────────
 
 function InfoRow({ label, value }: { readonly label: string; readonly value: string }) {
@@ -225,6 +291,9 @@ export const OrderDetail = ({ order, onStatusChange }: Props) => {
           </div>
         </div>
       </div>
+
+      {/* ── Estado del pedido ── */}
+      <StatusStepper status={order.status} orderType={order.orderType} />
 
       <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
 
