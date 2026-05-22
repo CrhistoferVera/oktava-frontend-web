@@ -31,15 +31,23 @@ export interface OrderAddress {
 //  ORDER ITEM  (detalle de la orden)
 // ─────────────────────────────────────────────
 
+export interface OrderItemOption {
+  id: string;
+  optionId: string;
+  optionName: string;
+  extraPrice: number;
+}
+
 export interface OrderItem {
   id: string;
   orderId: string;
-  variantId: string;
+  productId: string;
   productName: string;
-  variantName: string;
   quantity: number;
-  unitPrice: string;  // Decimal viene como string desde JSON
-  subtotal: string;
+  unitPrice: number;
+  subtotal: number;
+  notes: string | null;
+  selectedOptions: OrderItemOption[];
 }
 
 // ─────────────────────────────────────────────
