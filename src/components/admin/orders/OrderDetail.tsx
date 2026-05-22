@@ -27,11 +27,9 @@ const statusStyles: Record<OrderStatus, string> = {
   PREPARING:  'bg-blue-900/40 text-blue-400 border border-blue-700',
   ON_THE_WAY: 'bg-red-900/40 text-red-400 border border-red-700',
   PICKED_UP:  'bg-purple-900/40 text-purple-400 border border-purple-700',
-  CANCELLED:  'bg-gray-800 text-gray-400 border border-gray-600',
-  COMPLETED:  'bg-green-900 text-green-400 border border-green-600',
+  CANCELLED:  'bg-zinc-800 text-zinc-400 border border-zinc-600',
+  COMPLETED:  'bg-green-900/60 text-green-400 border border-green-700',
 };
-
-// ─── Flujo de estados siguientes ─────────────────────────────────────────────
 
 function getNextStatuses(status: OrderStatus, orderType: OrderType): OrderStatus[] {
   switch (status) {
@@ -51,17 +49,7 @@ const actionLabel: Partial<Record<OrderStatus, string>> = {
   CANCELLED:  'Cancelar pedido',
 };
 
-// ─── Badge de estado (solo visual) ───────────────────────────────────────────
-
-function EstadoBadge({ status }: { readonly status: OrderStatus }) {
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[status]}`}>
-      {statusLabel[status]}
-    </span>
-  );
-}
-
-// ─── Dropdown selector de estado (header) ────────────────────────────────────
+// ─── StatusDropdown ───────────────────────────────────────────────────────────
 
 const ALL_STATUSES: OrderStatus[] = ['PENDING', 'PREPARING', 'ON_THE_WAY', 'PICKED_UP', 'CANCELLED', 'COMPLETED'];
 
@@ -81,21 +69,21 @@ function StatusDropdown({ status, onSelect }: {
   }, []);
 
   return (
-    <div ref={ref} className="relative flex flex-col items-end gap-1">
+    <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border transition-opacity hover:opacity-80 ${statusStyles[status]}`}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-opacity hover:opacity-80 ${statusStyles[status]}`}
       >
         {statusLabel[status]}
         <ChevronDown className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute top-7 right-0 z-20 bg-[#1e1e1e] border border-gray-700 rounded-lg shadow-xl overflow-hidden w-40">
+        <div className="absolute top-9 right-0 z-20 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden w-44">
           {ALL_STATUSES.map(s => (
             <button
               key={s}
               onClick={() => { onSelect(s); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-xs font-semibold transition-colors hover:bg-white/5 ${s === status ? 'opacity-40 cursor-default' : ''} ${statusStyles[s].replace(/bg-\S+/, '').replace(/border\S+/, '').trim()}`}
+              className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors hover:bg-white/5 ${s === status ? 'opacity-40 cursor-default' : ''} ${statusStyles[s].replace(/bg-\S+/, '').replace(/border\S+/, '').trim()}`}
             >
               {statusLabel[s]}
             </button>
@@ -106,7 +94,7 @@ function StatusDropdown({ status, onSelect }: {
   );
 }
 
-// ─── Botones de acción contextual (footer) ────────────────────────────────────
+// ─── ActionButtons ────────────────────────────────────────────────────────────
 
 function ActionButtons({ order, onStatusChange }: {
   readonly order: Order;
@@ -118,21 +106,18 @@ function ActionButtons({ order, onStatusChange }: {
   const [primary, ...rest] = nextStatuses;
 
   return (
-    <div className="px-5 pt-4 pb-3 border-t border-gray-800 flex flex-col gap-2">
-      {/* Acción principal — siempre el paso positivo siguiente */}
+    <div className="px-5 pt-4 pb-5 border-t border-zinc-800 flex flex-col gap-2">
       <button
         onClick={() => onStatusChange(order.id, primary)}
-        className="w-full py-2.5 rounded-lg text-sm font-bold bg-red-600 hover:bg-red-500 text-white transition-colors"
+        className="w-full py-3 rounded-xl text-sm font-bold bg-red-600 hover:bg-red-500 text-white transition-colors"
       >
         {actionLabel[primary] ?? statusLabel[primary]}
       </button>
-
-      {/* Resto de acciones secundarias (ej: Cancelar) */}
       {rest.map(s => (
         <button
           key={s}
           onClick={() => onStatusChange(order.id, s)}
-          className="w-full py-2 rounded-lg text-xs font-semibold bg-transparent hover:bg-white/5 text-gray-500 hover:text-gray-300 border border-gray-700 transition-colors"
+          className="w-full py-2.5 rounded-xl text-xs font-semibold bg-transparent hover:bg-white/5 text-zinc-500 hover:text-zinc-300 border border-zinc-800 transition-colors"
         >
           {actionLabel[s] ?? statusLabel[s]}
         </button>
@@ -141,15 +126,11 @@ function ActionButtons({ order, onStatusChange }: {
   );
 }
 
-// ─── Acciones de dirección ────────────────────────────────────────────────────
+// ─── AddressActions ───────────────────────────────────────────────────────────
 
 function AddressActions({ address }: { readonly address: NonNullable<Order['address']> }) {
   const [copied, setCopied] = useState(false);
-
   const mapsUrl = `https://www.google.com/maps?q=${address.latitude},${address.longitude}`;
-  const fullAddress = [address.direction, address.departament, address.reference]
-    .filter(Boolean)
-    .join(', ');
 
   const handleCopy = () => {
     navigator.clipboard.writeText(mapsUrl).then(() => {
@@ -159,27 +140,38 @@ function AddressActions({ address }: { readonly address: NonNullable<Order['addr
   };
 
   return (
-    <div className="flex gap-2 mt-2">
+    <div className="flex gap-2 mt-3">
       <a
         href={mapsUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded bg-blue-900/30 border border-blue-800 text-blue-400 hover:bg-blue-900/50 transition-colors text-[11px] font-semibold"
+        className="flex flex-1 items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-900/20 border border-blue-800/60 text-blue-400 hover:bg-blue-900/40 transition-colors text-xs font-semibold"
       >
-        <MapPin className="w-3 h-3" />
+        <MapPin className="w-3.5 h-3.5" />
         Ver en Maps
       </a>
       <button
         onClick={handleCopy}
-        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded border transition-colors text-[11px] font-semibold
+        className={`flex flex-1 items-center justify-center gap-1.5 py-2 rounded-xl border transition-colors text-xs font-semibold
           ${copied
-            ? 'bg-green-900/30 border-green-800 text-green-400'
-            : 'bg-gray-800/60 border-gray-700 text-gray-400 hover:bg-gray-700/60'
+            ? 'bg-green-900/30 border-green-800/60 text-green-400'
+            : 'bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200'
           }`}
       >
-        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-        {copied ? 'Copiado' : 'Copiar'}
+        {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+        {copied ? 'Copiado' : 'Copiar link'}
       </button>
+    </div>
+  );
+}
+
+// ─── InfoRow ──────────────────────────────────────────────────────────────────
+
+function InfoRow({ label, value }: { readonly label: string; readonly value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5 border-b border-zinc-800/60 last:border-0">
+      <span className="text-xs text-zinc-600 shrink-0">{label}</span>
+      <span className="text-sm font-semibold text-white text-right">{value}</span>
     </div>
   );
 }
@@ -191,81 +183,113 @@ export const OrderDetail = ({ order, onStatusChange }: Props) => {
     ? `${order.user.firstName} ${order.user.lastName}`
     : '—';
 
-  const clientEmail = order?.user?.email ?? '—';
-
   const hora = order
     ? new Date(order.createdAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  const fecha = order
+    ? new Date(order.createdAt).toLocaleDateString('es-BO', { day: '2-digit', month: 'short' })
     : '';
 
   const handleSelect = (newStatus: OrderStatus) => {
     if (order && onStatusChange) onStatusChange(order.id, newStatus);
   };
 
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 py-16 text-center">
+        <span className="text-5xl">🧾</span>
+        <p className="text-sm font-semibold text-zinc-600">Selecciona un pedido</p>
+        <p className="text-xs text-zinc-700">Haz clic en cualquier fila de la tabla</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-[#161616] border border-gray-800 rounded-lg py-3 overflow-y-auto max-h-[calc(100vh-8rem)]">
-      {order ? (
-        <div className="text-white">
-          {/* Header: número, hora, badges */}
-          <div className="px-5 py-1 pb-2 border-b border-gray-800 flex justify-between items-center">
-            <div className="flex flex-col">
-              <p className="text-red-700 font-bold font-roboto-condensed text-3xl">{order.orderNumber}</p>
-              <p className="text-sm text-gray-700">Hoy {hora}</p>
-            </div>
-            <div className="flex flex-col gap-2 items-end">
-              <StatusDropdown status={order.status} onSelect={handleSelect} />
-              <TipoBadge orderType={order.orderType} />
-            </div>
+    <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
+
+      {/* ── Header ── */}
+      <div className="bg-zinc-900/80 px-6 py-4 border-b border-zinc-800">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-3xl font-black tracking-tight text-red-500 font-roboto-condensed">
+              {order.orderNumber}
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-600">
+              {fecha} · {hora}
+            </p>
           </div>
-
-          {/* Info del cliente */}
-          <div className="px-5 py-3 border-b border-gray-800 text-[12px]">
-            <p className="text-gray-700 font-bold pb-0.5">CLIENTE:</p>
-            <div className="bg-gray-600/20 rounded-lg border border-gray-800">
-              <div className="flex justify-between border-b border-gray-800">
-                <p className="px-3 py-1.5 text-gray-600">Nombre:</p>
-                <p className="px-3 py-1.5 text-white font-semibold">{clientName}</p>
-              </div>
-              <div className="flex justify-between border-b border-gray-800">
-                <p className="px-3 py-1.5 text-gray-600">Teléfono:</p>
-                <p className="px-3 py-1.5 text-white font-semibold">{order.user?.phone ?? '—'}</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="px-3 py-1.5 text-gray-600">Dirección:</p>
-                <p className="px-3 py-1.5 text-white font-semibold text-right">{order.address?.direction ?? '—'}</p>
-              </div>
-            </div>
-
-            {/* Acciones de dirección */}
-            {order.address && (
-              <AddressActions address={order.address} />
-            )}
+          <div className="flex flex-col items-end gap-2">
+            <StatusDropdown status={order.status} onSelect={handleSelect} />
+            <TipoBadge orderType={order.orderType} />
           </div>
-
-          {/* Ítems y resumen */}
-          <div className="px-5 py-3 border-b border-gray-800 text-[12px]">
-            <OrderList orderDetail={order.items} />
-            <OrderSummary subtotal={order.subtotal} deliveryFee={order.deliveryFee} total={order.total} />
-          </div>
-
-          {/* Nota del cliente */}
-          {order.notes && (
-            <div className="px-5 py-3 border-b border-gray-800 text-[12px]">
-              <p className="text-gray-700 font-bold pb-0.5">NOTA:</p>
-              <div className="bg-gray-600/20 rounded-lg border border-gray-800 px-3 py-2 text-gray-300">
-                {order.notes}
-              </div>
-            </div>
-          )}
-
-          {/* Acciones contextuales */}
-          {onStatusChange && <ActionButtons order={order} onStatusChange={onStatusChange} />}
         </div>
-      ) : (
-        <div className="text-xl text-gray-600 text-center font-bold">
-          <p className="text-5xl p-4">🧾</p>
-          <p>Seleccione un pedido</p>
+      </div>
+
+      <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
+
+        {/* ── Cliente ── */}
+        <div className="px-6 py-4 border-b border-zinc-800">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-zinc-600">
+            Cliente
+          </p>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4">
+            <InfoRow label="Nombre" value={clientName} />
+            <InfoRow label="Teléfono" value={order.user?.phone ?? '—'} />
+          </div>
         </div>
-      )}
+
+        {/* ── Dirección (solo DELIVERY) ── */}
+        {order.orderType === 'DELIVERY' && (
+          <div className="px-6 py-4 border-b border-zinc-800">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-zinc-600">
+              Dirección de entrega
+            </p>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4">
+              <InfoRow label="Calle" value={order.address?.direction ?? '—'} />
+              {order.address?.departament && (
+                <InfoRow label="Dpto." value={order.address.departament} />
+              )}
+              {order.address?.reference && (
+                <InfoRow label="Referencia" value={order.address.reference} />
+              )}
+              {order.address?.contact && (
+                <InfoRow label="Contacto" value={order.address.contact} />
+              )}
+            </div>
+            {order.address && <AddressActions address={order.address} />}
+          </div>
+        )}
+
+        {/* ── Ítems ── */}
+        <div className="px-6 py-4 border-b border-zinc-800">
+          <OrderList orderDetail={order.items} />
+        </div>
+
+        {/* ── Totales ── */}
+        <div className="px-6 py-4 border-b border-zinc-800">
+          <OrderSummary
+            subtotal={order.subtotal}
+            deliveryFee={order.deliveryFee}
+            total={order.total}
+          />
+        </div>
+
+        {/* ── Nota del pedido ── */}
+        {order.notes && (
+          <div className="px-6 py-4 border-b border-zinc-800">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-zinc-600">
+              Nota del cliente
+            </p>
+            <div className="rounded-xl border border-amber-900/40 bg-amber-950/20 px-4 py-3 text-sm italic text-amber-300/80">
+              {order.notes}
+            </div>
+          </div>
+        )}
+
+        {/* ── Acciones ── */}
+        {onStatusChange && <ActionButtons order={order} onStatusChange={onStatusChange} />}
+      </div>
     </div>
   );
 };

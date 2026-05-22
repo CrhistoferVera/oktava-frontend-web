@@ -223,7 +223,7 @@ export const OrdersTable = ({ orders, loading, onStatusChange }: Props) => {
         </div>
 
         {/* Panel desktop */}
-        <div className="hidden md:block w-80 shrink-0 sticky top-4 self-start">
+        <div className="hidden md:block w-110 shrink-0 sticky top-4 self-start">
           <OrderDetail order={syncedSelected} onStatusChange={handleStatusChange} />
         </div>
       </div>
