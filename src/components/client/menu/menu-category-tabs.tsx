@@ -1,14 +1,11 @@
 "use client";
 
-import type {
-  ProductCategory,
-  ProductFilterCategory,
-} from "@/types/storefront.types";
+import type { ProductCategory } from "@/types/storefront.types";
 
 interface MenuCategoryTabsProps {
   categories: ProductCategory[];
-  activeCategory: ProductFilterCategory;
-  onChange: (category: ProductFilterCategory) => void;
+  activeCategory: string;
+  onChange: (category: string) => void;
 }
 
 export function MenuCategoryTabs({

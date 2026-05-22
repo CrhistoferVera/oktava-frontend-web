@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { CartItem, Product } from "@/types/storefront.types";
+import type { CartItem, Product, SelectedOptionGroup } from "@/types/storefront.types";
 
 const CART_KEY = "oktava_cart";
 
@@ -34,27 +34,32 @@ interface StorefrontCartContextValue {
   hydrated: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addToCart: (product: Product) => void;
-  decreaseQuantity: (productId: string) => void;
-  removeFromCart: (productId: string) => void;
+  /**
+   * Products WITHOUT options: deduplicates by productId (_cartId = product.id).
+   * Products WITH options: always creates a new line item (_cartId = uuid).
+   */
+  addToCart: (product: Product, selectedOptions?: SelectedOptionGroup[]) => void;
+  /** Increment quantity for an existing line item by its _cartId. */
+  increaseQuantity: (cartId: string) => void;
+  /** Decrement quantity for a line item. Removes it when it reaches 0. */
+  decreaseQuantity: (cartId: string) => void;
+  removeFromCart: (cartId: string) => void;
   clearCart: () => void;
 }
 
 const StorefrontCartContext =
   createContext<StorefrontCartContextValue | null>(null);
 
-export function StorefrontCartProvider({ children }: { children: ReactNode }) {
+export function StorefrontCartProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  // Load from localStorage only on the client, after first render
   useEffect(() => {
     setItems(loadCart());
     setHydrated(true);
   }, []);
 
-  // Persist to localStorage whenever items change (skip before hydration)
   useEffect(() => {
     if (hydrated) saveCart(items);
   }, [items, hydrated]);
@@ -62,39 +67,57 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
-  const addToCart = useCallback((product: Product) => {
-    setItems((previousItems) => {
-      const existingItem = previousItems.find(
-        (item) => item.product.id === product.id,
-      );
+  const addToCart = useCallback(
+    (product: Product, selectedOptions?: SelectedOptionGroup[]) => {
+      setItems((prev) => {
+        const hasOptions = selectedOptions && selectedOptions.length > 0;
 
-      if (!existingItem) {
-        return [...previousItems, { product, quantity: 1 }];
-      }
+        if (!hasOptions) {
+          // No options — deduplicate by productId, _cartId === product.id
+          const existing = prev.find((i) => i._cartId === product.id);
+          if (existing) {
+            return prev.map((i) =>
+              i._cartId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+            );
+          }
+          return [
+            ...prev,
+            { _cartId: product.id, product, quantity: 1, selectedOptions: [], extraPrice: 0 },
+          ];
+        }
 
-      return previousItems.map((item) =>
-        item.product.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item,
-      );
-    });
-  }, []);
+        // Has options — always a new line item
+        const extraPrice = (selectedOptions ?? [])
+          .flatMap((g) => g.items)
+          .reduce((sum, o) => sum + o.extraPrice, 0);
 
-  const decreaseQuantity = useCallback((productId: string) => {
-    setItems((prev) => {
-      const item = prev.find((i) => i.product.id === productId);
-      if (!item) return prev;
-      if (item.quantity === 1) return prev.filter((i) => i.product.id !== productId);
-      return prev.map((i) =>
-        i.product.id === productId ? { ...i, quantity: i.quantity - 1 } : i,
-      );
-    });
-  }, []);
+        const cartId = `${product.id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        return [
+          ...prev,
+          { _cartId: cartId, product, quantity: 1, selectedOptions: selectedOptions ?? [], extraPrice },
+        ];
+      });
+    },
+    [],
+  );
 
-  const removeFromCart = useCallback((productId: string) => {
-    setItems((previousItems) =>
-      previousItems.filter((item) => item.product.id !== productId),
+  const increaseQuantity = useCallback((cartId: string) => {
+    setItems((prev) =>
+      prev.map((i) => (i._cartId === cartId ? { ...i, quantity: i.quantity + 1 } : i)),
     );
+  }, []);
+
+  const decreaseQuantity = useCallback((cartId: string) => {
+    setItems((prev) => {
+      const item = prev.find((i) => i._cartId === cartId);
+      if (!item) return prev;
+      if (item.quantity === 1) return prev.filter((i) => i._cartId !== cartId);
+      return prev.map((i) => (i._cartId === cartId ? { ...i, quantity: i.quantity - 1 } : i));
+    });
+  }, []);
+
+  const removeFromCart = useCallback((cartId: string) => {
+    setItems((prev) => prev.filter((i) => i._cartId !== cartId));
   }, []);
 
   const clearCart = useCallback(() => {
@@ -109,7 +132,8 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
   const totalAmount = useMemo(
     () =>
       items.reduce(
-        (total, item) => total + item.quantity * (item.product.price ?? 0),
+        (total, item) =>
+          total + item.quantity * ((item.product.price ?? 0) + item.extraPrice),
         0,
       ),
     [items],
@@ -125,11 +149,16 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
       openCart,
       closeCart,
       addToCart,
+      increaseQuantity,
       decreaseQuantity,
       removeFromCart,
       clearCart,
     }),
-    [items, totalItems, totalAmount, isCartOpen, hydrated, openCart, closeCart, addToCart, decreaseQuantity, removeFromCart, clearCart],
+    [
+      items, totalItems, totalAmount, isCartOpen, hydrated,
+      openCart, closeCart, addToCart, increaseQuantity,
+      decreaseQuantity, removeFromCart, clearCart,
+    ],
   );
 
   return (
@@ -141,12 +170,8 @@ export function StorefrontCartProvider({ children }: { children: ReactNode }) {
 
 export function useStorefrontCart() {
   const context = useContext(StorefrontCartContext);
-
   if (!context) {
-    throw new Error(
-      "useStorefrontCart must be used within StorefrontCartProvider",
-    );
+    throw new Error("useStorefrontCart must be used within StorefrontCartProvider");
   }
-
   return context;
 }

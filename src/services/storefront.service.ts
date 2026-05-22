@@ -2,6 +2,8 @@ import type {
   OrderSummary,
   Product,
   ProductCategory,
+  StorefrontOptionGroup,
+  StorefrontOptionItem,
 } from "@/types/storefront.types";
 
 const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
@@ -20,24 +22,55 @@ interface ApiCategory {
   isActive: boolean;
 }
 
+interface ApiOptionItem {
+  id: string;
+  name: string;
+  extraPrice: number;
+  isAvailable: boolean;
+  sortOrder: number;
+}
+
+interface ApiOptionGroup {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  minSelections: number;
+  maxSelections: number;
+  sortOrder: number;
+  options: ApiOptionItem[];
+}
+
 interface ApiProduct {
   id: string;
   name: string;
   description: string | null;
+  includes: string | null;
   imageUrl: string | null;
   categoryId: string;
   price: number | null;
   isAvailable: boolean;
+  optionGroups: ApiOptionGroup[];
+}
+
+function mapOptionItem(o: ApiOptionItem): StorefrontOptionItem {
+  return { id: o.id, name: o.name, extraPrice: o.extraPrice, isAvailable: o.isAvailable };
+}
+
+function mapOptionGroup(g: ApiOptionGroup): StorefrontOptionGroup {
+  return {
+    id: g.id,
+    name: g.name,
+    isRequired: g.isRequired,
+    minSelections: g.minSelections,
+    maxSelections: g.maxSelections,
+    options: g.options.filter((o) => o.isAvailable).map(mapOptionItem),
+  };
 }
 
 export const storefrontService = {
   async getCategories(): Promise<ProductCategory[]> {
     const data = await apiFetch<ApiCategory[]>("/categories");
-    return data.map((c) => ({
-      id: c.id,
-      slug: c.slug,
-      label: c.name,
-    }));
+    return data.map((c) => ({ id: c.id, slug: c.slug, label: c.name }));
   },
 
   async getProducts(): Promise<Product[]> {
@@ -48,9 +81,11 @@ export const storefrontService = {
         id: p.id,
         name: p.name,
         description: p.description,
+        includes: p.includes,
         imageUrl: p.imageUrl,
         categoryId: p.categoryId,
         price: p.price,
+        optionGroups: (p.optionGroups ?? []).map(mapOptionGroup),
       }));
   },
 

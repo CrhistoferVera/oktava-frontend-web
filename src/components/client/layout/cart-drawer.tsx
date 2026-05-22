@@ -1,14 +1,34 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-const PLACEHOLDER = "https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=400&auto=format&fit=crop";
+const PLACEHOLDER =
+  "https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=400&auto=format&fit=crop";
 
 import { X, Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
+import type { CartItem } from "@/types/storefront.types";
 
 function formatCurrency(value: number) {
   return `Bs. ${value.toFixed(0)}`;
+}
+
+function OptionsSummary({ item }: Readonly<{ item: CartItem }>) {
+  if (item.selectedOptions.length === 0) return null;
+
+  const parts = item.selectedOptions
+    .flatMap((g) => g.items.map((o) => o.name));
+
+  return (
+    <p className="mt-0.5 text-xs leading-snug text-zinc-500">
+      {parts.join(" · ")}
+      {item.extraPrice > 0 && (
+        <span className="ml-1 text-red-400">
+          +{formatCurrency(item.extraPrice)}
+        </span>
+      )}
+    </p>
+  );
 }
 
 export function CartDrawer() {
@@ -19,7 +39,7 @@ export function CartDrawer() {
     totalAmount,
     isCartOpen,
     closeCart,
-    addToCart,
+    increaseQuantity,
     decreaseQuantity,
     removeFromCart,
     clearCart,
@@ -94,16 +114,16 @@ export function CartDrawer() {
           <>
             {/* Item list */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-              {items.map(({ product, quantity }) => (
+              {items.map((item) => (
                 <div
-                  key={product.id}
+                  key={item._cartId}
                   className="flex gap-3 rounded-2xl border border-white/6 bg-white/3 p-3"
                 >
                   {/* Image */}
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl">
                     <img
-                      src={product.imageUrl ?? PLACEHOLDER}
-                      alt={product.name}
+                      src={item.product.imageUrl ?? PLACEHOLDER}
+                      alt={item.product.name}
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -111,12 +131,15 @@ export function CartDrawer() {
                   {/* Info */}
                   <div className="flex flex-1 flex-col justify-between min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold leading-tight text-white truncate">
-                        {product.name}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-tight text-white truncate">
+                          {item.product.name}
+                        </p>
+                        <OptionsSummary item={item} />
+                      </div>
                       <button
                         type="button"
-                        onClick={() => removeFromCart(product.id)}
+                        onClick={() => removeFromCart(item._cartId)}
                         className="shrink-0 text-zinc-600 transition-colors hover:text-red-400"
                         aria-label="Eliminar producto"
                       >
@@ -126,25 +149,27 @@ export function CartDrawer() {
 
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm font-bold text-white">
-                        {formatCurrency((product.price ?? 0) * quantity)}
+                        {formatCurrency(
+                          ((item.product.price ?? 0) + item.extraPrice) * item.quantity,
+                        )}
                       </span>
 
                       {/* Counter */}
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => decreaseQuantity(product.id)}
+                          onClick={() => decreaseQuantity(item._cartId)}
                           className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:bg-red-600/30 hover:text-white hover:border-red-500/40"
                           aria-label="Quitar uno"
                         >
                           <Minus size={13} />
                         </button>
                         <span className="w-6 text-center text-sm font-bold text-white">
-                          {quantity}
+                          {item.quantity}
                         </span>
                         <button
                           type="button"
-                          onClick={() => addToCart(product)}
+                          onClick={() => increaseQuantity(item._cartId)}
                           className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:bg-red-600/30 hover:text-white hover:border-red-500/40"
                           aria-label="Agregar uno"
                         >
@@ -161,7 +186,7 @@ export function CartDrawer() {
             <div className="border-t border-white/8 px-5 py-4 space-y-4">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-zinc-400">
-                  <span>Subtotal ({totalItems} items)</span>
+                  <span>Subtotal ({totalItems} {totalItems === 1 ? "item" : "items"})</span>
                   <span>{formatCurrency(totalAmount)}</span>
                 </div>
                 <div className="flex justify-between text-zinc-400">

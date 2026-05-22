@@ -7,7 +7,6 @@ import { CustomerProductCard } from "@/components/client/product/customer-produc
 import type {
   Product,
   ProductCategory,
-  ProductFilterCategory,
 } from "@/types/storefront.types";
 
 interface MenuCatalogProps {
@@ -16,8 +15,7 @@ interface MenuCatalogProps {
 }
 
 export function MenuCatalog({ categories, products }: MenuCatalogProps) {
-  const [activeCategory, setActiveCategory] =
-    useState<ProductFilterCategory>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const filteredProducts = useMemo(() => {
     if (activeCategory === "all") return products;
