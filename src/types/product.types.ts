@@ -8,6 +8,25 @@ export type Category = {
   isActive: boolean;
 };
 
+// ─── OptionGroup / Option ─────────────────────────────────────────────────────
+export type OptionItem = {
+  id: string;
+  name: string;
+  extraPrice: number;
+  isAvailable: boolean;
+  sortOrder: number;
+};
+
+export type OptionGroup = {
+  id: string;
+  name: string;
+  isRequired: boolean;
+  minSelections: number;
+  maxSelections: number;
+  sortOrder: number;
+  options: OptionItem[];
+};
+
 // ─── Product ──────────────────────────────────────────────────────────────────
 // Shape returned by GET /products and GET /products/:id
 // Aligns exactly with backend mapProduct() response.
@@ -17,12 +36,14 @@ export type Product = {
   id: string;
   name: string;
   description: string | null;
+  includes: string | null;
   imageUrl: string | null;
   categoryId: string;
   category: string | null; // display name from DB (e.g. "Pollos")
-  price: number | null;    // from base ProductVariant; null if no variant exists
+  price: number | null;
   status: ProductStatus;
   isAvailable: boolean;
+  optionGroups: OptionGroup[];
   createdAt: string;
   updatedAt: string;
 };

@@ -3,10 +3,16 @@ import {
   Category,
   CategoryAdminItem,
   CategoryPayload,
+  OptionGroup,
+  OptionItem,
   Product,
   UpdateCategoryPayload,
 } from '@/types/product.types';
-import { CreateProductPayload } from '@/types/product-form.types';
+import {
+  CreateOptionGroupPayload,
+  CreateOptionPayload,
+  CreateProductPayload,
+} from '@/types/product-form.types';
 
 export const productService = {
   uploadImage: async (file: File): Promise<string> => {
@@ -74,5 +80,59 @@ export const productService = {
 
   permanentlyDeleteProduct: async (id: string): Promise<void> => {
     await api.delete(`/products/${id}/permanently`);
+  },
+
+  // ─── OptionGroups ──────────────────────────────────────────────────────────
+
+  createOptionGroup: async (
+    productId: string,
+    payload: CreateOptionGroupPayload,
+  ): Promise<OptionGroup> => {
+    const { data } = await api.post<OptionGroup>(
+      `/products/${productId}/option-groups`,
+      payload,
+    );
+    return data;
+  },
+
+  updateOptionGroup: async (
+    groupId: string,
+    payload: Partial<CreateOptionGroupPayload>,
+  ): Promise<OptionGroup> => {
+    const { data } = await api.patch<OptionGroup>(`/option-groups/${groupId}`, payload);
+    return data;
+  },
+
+  deleteOptionGroup: async (groupId: string): Promise<void> => {
+    await api.delete(`/option-groups/${groupId}`);
+  },
+
+  // ─── Options ───────────────────────────────────────────────────────────────
+
+  createOption: async (
+    groupId: string,
+    payload: CreateOptionPayload,
+  ): Promise<OptionItem> => {
+    const { data } = await api.post<OptionItem>(
+      `/option-groups/${groupId}/options`,
+      payload,
+    );
+    return data;
+  },
+
+  updateOption: async (
+    groupId: string,
+    optionId: string,
+    payload: Partial<CreateOptionPayload>,
+  ): Promise<OptionItem> => {
+    const { data } = await api.patch<OptionItem>(
+      `/option-groups/${groupId}/options/${optionId}`,
+      payload,
+    );
+    return data;
+  },
+
+  deleteOption: async (groupId: string, optionId: string): Promise<void> => {
+    await api.delete(`/option-groups/${groupId}/options/${optionId}`);
   },
 };

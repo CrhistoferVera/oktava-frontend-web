@@ -9,8 +9,10 @@ export const STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
 export const INITIAL_FORM_FIELDS: CreateProductFormFields = {
   name: '',
   description: '',
+  includes: '',
   categoryId: '',
   price: '',
   status: 'active',
   imageUrl: '',
+  optionGroups: [],
 };

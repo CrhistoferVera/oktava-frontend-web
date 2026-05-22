@@ -39,9 +39,24 @@ export function productToFormFields(product: Product): CreateProductFormFields {
   return {
     name: product.name,
     description: product.description ?? '',
+    includes: product.includes ?? '',
     categoryId: product.categoryId,
     price: String(product.price ?? ''),
     status: product.status,
     imageUrl: product.imageUrl ?? '',
+    optionGroups: (product.optionGroups ?? []).map((g) => ({
+      _key: g.id,
+      name: g.name,
+      isRequired: g.isRequired,
+      minSelections: String(g.minSelections),
+      maxSelections: String(g.maxSelections),
+      sortOrder: String(g.sortOrder),
+      options: g.options.map((o) => ({
+        _key: o.id,
+        name: o.name,
+        extraPrice: String(o.extraPrice),
+        isAvailable: o.isAvailable,
+      })),
+    })),
   };
 }
