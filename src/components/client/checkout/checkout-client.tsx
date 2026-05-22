@@ -22,7 +22,22 @@ import { useAuth } from "@/context/AuthContext";
 import { addressService } from "@/services/address.service";
 import { orderService } from "@/services/order.service";
 import type { Address, AddressPayload } from "@/types/address.types";
-import type { PaymentMethod } from "@/types/order.types";
+import type { CartItem } from "@/types/storefront.types";
+import type { CreateOrderItemDto, PaymentMethod } from "@/types/order.types";
+
+function cartItemToOrderItem({ product, quantity, selectedOptions }: CartItem): CreateOrderItemDto {
+  return {
+    productId: product.id,
+    quantity,
+    selectedOptions: selectedOptions.flatMap((group) =>
+      group.items.map((opt) => ({
+        optionId: opt.optionId,
+        optionName: opt.name,
+        extraPrice: opt.extraPrice,
+      }))
+    ),
+  };
+}
 
 const AddressFormModal = dynamic(
   () =>
@@ -154,10 +169,7 @@ export default function CheckoutClient() {
         orderType,
         addressId: orderType === "DELIVERY" ? (selectedAddressId ?? undefined) : undefined,
         notes: notes.trim() || undefined,
-        items: items.map(({ product, quantity }) => ({
-          productId: product.id,
-          quantity,
-        })),
+        items: items.map(cartItemToOrderItem),
       });
       setOrderNumber(order.orderNumber);
       clearCart();

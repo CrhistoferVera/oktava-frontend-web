@@ -86,9 +86,16 @@ export interface Order {
 //  DTOs  (lo que se envía al backend)
 // ─────────────────────────────────────────────
 
+export interface CreateOrderItemOptionDto {
+  optionId: string;
+  optionName: string;
+  extraPrice: number;
+}
+
 export interface CreateOrderItemDto {
   productId: string;
   quantity: number;
+  selectedOptions?: CreateOrderItemOptionDto[];
 }
 
 export type PaymentMethod = 'QR' | 'CASH' | 'CARD';
