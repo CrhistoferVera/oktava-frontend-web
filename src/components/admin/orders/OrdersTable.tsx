@@ -1,6 +1,6 @@
 'use client'
 import { ChevronDown, ChevronsUpDown, ChevronUp, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Filters, FILTER_STATUS_MAP } from "./Filters";
 import {
   createColumnHelper,
@@ -12,7 +12,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { OrderDetail } from "./OrderDetail";
-import type { Order, OrderStatus } from "@/types/order.types";
+import type { Order, OrderStatus, OrderType } from "@/types/order.types";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +20,7 @@ interface Props {
   readonly orders: Order[];
   readonly loading: boolean;
   readonly onStatusChange: (orderId: string, newStatus: OrderStatus) => void;
+  readonly autoSelectedOrderId?: string | null;
 }
 
 // ─── Badges ───────────────────────────────────────────────────────────────────
@@ -64,56 +65,81 @@ function SortIcon({ sorted }: { sorted: false | 'asc' | 'desc' }) {
   return <ChevronsUpDown className="inline w-3 h-3 ml-1 text-gray-600" />;
 }
 
-// ─── Columnas ─────────────────────────────────────────────────────────────────
+// ─── Hora + Espera cell ───────────────────────────────────────────────────────
+
+function HoraCell({ createdAt, status }: { readonly createdAt: string; readonly status: OrderStatus }) {
+  const time = new Date(createdAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+  const showWait = status === 'PENDING' || status === 'PREPARING';
+  if (!showWait) return <span className="text-gray-500 text-sm">{time}</span>;
+
+  const mins = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60_000);
+  const waitLabel = mins < 1 ? '< 1 min' : `${mins} min`;
+  const isUrgent = mins >= 10;
+
+  return (
+    <div>
+      <span className="text-gray-500 text-sm">{time}</span>
+      <p className={`text-xs mt-0.5 font-semibold ${isUrgent ? 'text-red-400 animate-pulse' : 'text-zinc-500'}`}>
+        {waitLabel}
+      </p>
+    </div>
+  );
+}
+
+// ─── Acción rápida ────────────────────────────────────────────────────────────
+
+function getQuickNext(status: OrderStatus, orderType: OrderType): OrderStatus | null {
+  if (status === 'PENDING') return 'PREPARING';
+  if (status === 'PREPARING') return orderType === 'DELIVERY' ? 'ON_THE_WAY' : 'PICKED_UP';
+  return null;
+}
+
+const QUICK_LABEL: Partial<Record<OrderStatus, string>> = {
+  PREPARING:  'Aceptar',
+  ON_THE_WAY: 'En camino',
+  PICKED_UP:  'Listo',
+};
+
+function QuickActionCell({ order, onStatusChange }: {
+  readonly order: Order;
+  readonly onStatusChange: (id: string, s: OrderStatus) => void;
+}) {
+  const next = getQuickNext(order.status, order.orderType);
+  if (!next) return null;
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onStatusChange(order.id, next); }}
+      className="rounded-lg bg-red-600/20 border border-red-600/40 px-2.5 py-1 text-xs font-bold text-red-400 hover:bg-red-600/40 transition-colors whitespace-nowrap"
+    >
+      {QUICK_LABEL[next]}
+    </button>
+  );
+}
+
+// ─── Row styling ──────────────────────────────────────────────────────────────
+
+function rowClass(isSelected: boolean, status: OrderStatus, createdAt: string): string {
+  if (isSelected) return 'bg-red-950/30 border-l-2 border-l-red-600 border-b-gray-800/50';
+  if (status === 'PENDING') {
+    const mins = (Date.now() - new Date(createdAt).getTime()) / 60_000;
+    if (mins >= 10) return 'border-l-2 border-l-red-500 border-b-gray-800/50 bg-red-950/10';
+    return 'border-l-2 border-l-yellow-600/60 border-b-gray-800/50 hover:bg-white/2';
+  }
+  return 'border-b-gray-800/50 hover:bg-white/2';
+}
+
+// ─── Column helper ────────────────────────────────────────────────────────────
 
 const columnHelper = createColumnHelper<Order>();
 
-const columns = [
-  columnHelper.accessor('orderNumber', {
-    header: '#',
-    cell: info => <span className="font-mono text-red-400 font-bold">{info.getValue()}</span>,
-    enableSorting: false,
-  }),
-  columnHelper.accessor(row => row.user ? `${row.user.firstName} ${row.user.lastName}` : row.userId, {
-    id: 'client',
-    header: 'Cliente',
-    cell: info => <span className="text-gray-200">{info.getValue()}</span>,
-  }),
-  columnHelper.accessor('createdAt', {
-    header: 'Hora',
-    cell: info => (
-      <span className="text-gray-500 text-sm">
-        {new Date(info.getValue()).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}
-      </span>
-    ),
-  }),
-  columnHelper.accessor('status', {
-    header: 'Estado',
-    cell: info => <EstadoBadge status={info.getValue()} />,
-    enableSorting: false,
-  }),
-  columnHelper.accessor('orderType', {
-    header: 'Tipo',
-    cell: info => <TipoBadge orderType={info.getValue()} />,
-    enableSorting: false,
-  }),
-  columnHelper.accessor('total', {
-    header: 'Total',
-    cell: info => (
-      <span className="text-green-400 font-semibold">
-        Bs. {Number(info.getValue()).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
-      </span>
-    ),
-  }),
-];
-
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export const OrdersTable = ({ orders, loading, onStatusChange }: Props) => {
+export const OrdersTable = ({ orders, loading, onStatusChange, autoSelectedOrderId }: Props) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const autoSelectConsumedRef = useRef<string | null>(null);
 
   // Keep selected order in sync when orders refresh
   const syncedSelected = useMemo(() => {
@@ -121,14 +147,76 @@ export const OrdersTable = ({ orders, loading, onStatusChange }: Props) => {
     return orders.find(o => o.id === selectedOrder.id) ?? null;
   }, [orders, selectedOrder]);
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    onStatusChange(orderId, newStatus);
-  };
+  // Auto-select incoming order if not already consumed and nothing active is selected
+  useEffect(() => {
+    if (!autoSelectedOrderId || autoSelectedOrderId === autoSelectConsumedRef.current) return;
+    autoSelectConsumedRef.current = autoSelectedOrderId;
+    const order = orders.find(o => o.id === autoSelectedOrderId);
+    if (!order) return;
+    setSelectedOrder(prev => {
+      if (!prev || prev.status === 'COMPLETED' || prev.status === 'CANCELLED') return order;
+      return prev;
+    });
+  }, [autoSelectedOrderId, orders]);
 
   const filteredOrders = useMemo(() => {
     const statusFilter = FILTER_STATUS_MAP[activeFilter];
     return statusFilter === null ? orders : orders.filter(o => o.status === statusFilter);
   }, [orders, activeFilter]);
+
+  const filterCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    Object.entries(FILTER_STATUS_MAP).forEach(([label, status]) => {
+      counts[label] = status === null
+        ? orders.length
+        : orders.filter(o => o.status === status).length;
+    });
+    return counts;
+  }, [orders]);
+
+  const columns = useMemo(() => [
+    columnHelper.accessor('orderNumber', {
+      header: '#',
+      cell: info => <span className="font-mono text-red-400 font-bold">{info.getValue()}</span>,
+      enableSorting: false,
+    }),
+    columnHelper.accessor(row => row.user ? `${row.user.firstName} ${row.user.lastName}` : row.userId, {
+      id: 'client',
+      header: 'Cliente',
+      cell: info => <span className="text-gray-200">{info.getValue()}</span>,
+    }),
+    columnHelper.accessor('createdAt', {
+      header: 'Hora',
+      cell: info => (
+        <HoraCell createdAt={info.getValue()} status={info.row.original.status} />
+      ),
+    }),
+    columnHelper.accessor('status', {
+      header: 'Estado',
+      cell: info => <EstadoBadge status={info.getValue()} />,
+      enableSorting: false,
+    }),
+    columnHelper.accessor('orderType', {
+      header: 'Tipo',
+      cell: info => <TipoBadge orderType={info.getValue()} />,
+      enableSorting: false,
+    }),
+    columnHelper.accessor('total', {
+      header: 'Total',
+      cell: info => (
+        <span className="text-green-400 font-semibold">
+          Bs. {Number(info.getValue()).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
+        </span>
+      ),
+    }),
+    columnHelper.display({
+      id: 'action',
+      header: '',
+      cell: info => (
+        <QuickActionCell order={info.row.original} onStatusChange={onStatusChange} />
+      ),
+    }),
+  ], [onStatusChange]);
 
   const table = useReactTable({
     data: filteredOrders,
@@ -153,7 +241,7 @@ export const OrdersTable = ({ orders, loading, onStatusChange }: Props) => {
             className="bg-[#282828] text-gray-300 text-sm pl-8 pr-3 py-2 rounded border border-gray-700 focus:outline-none focus:border-gray-500 w-64"
           />
         </div>
-        <Filters value={activeFilter} onChange={setActiveFilter} />
+        <Filters value={activeFilter} onChange={setActiveFilter} counts={filterCounts} />
       </div>
 
       <div className="flex gap-5 items-start">
@@ -201,11 +289,7 @@ export const OrdersTable = ({ orders, loading, onStatusChange }: Props) => {
                     return (
                       <tr
                         key={row.id}
-                        className={`border-b transition-colors cursor-pointer
-                          ${isSelected
-                            ? 'bg-red-950/30 border-l-2 border-l-red-600 border-b-gray-800/50'
-                            : 'border-b-gray-800/50 hover:bg-white/2'
-                          }`}
+                        className={`border-b transition-colors cursor-pointer ${rowClass(isSelected, row.original.status, row.original.createdAt)}`}
                         onClick={() => setSelectedOrder(row.original)}
                       >
                         {row.getVisibleCells().map(cell => (
@@ -224,7 +308,7 @@ export const OrdersTable = ({ orders, loading, onStatusChange }: Props) => {
 
         {/* Panel desktop */}
         <div className="hidden md:block w-110 shrink-0 sticky top-4 self-start">
-          <OrderDetail order={syncedSelected} onStatusChange={handleStatusChange} />
+          <OrderDetail order={syncedSelected} onStatusChange={onStatusChange} />
         </div>
       </div>
 
@@ -243,7 +327,7 @@ export const OrdersTable = ({ orders, loading, onStatusChange }: Props) => {
               </button>
             </div>
             <div className="overflow-y-auto">
-              <OrderDetail order={syncedSelected} onStatusChange={handleStatusChange} />
+              <OrderDetail order={syncedSelected} onStatusChange={onStatusChange} />
             </div>
           </div>
         </div>

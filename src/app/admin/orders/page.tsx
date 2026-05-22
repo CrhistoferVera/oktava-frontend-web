@@ -13,15 +13,23 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const prevCountRef = useRef<number | null>(null);
   const [newOrderAlert, setNewOrderAlert] = useState(false);
+  const [autoSelectedOrderId, setAutoSelectedOrderId] = useState<string | null>(null);
+
+  // Browser tab title reflects pending count
+  useEffect(() => {
+    const pendingCount = orders.filter(o => o.status === 'PENDING').length;
+    document.title = pendingCount > 0 ? `(${pendingCount}) Pedidos — Admin` : 'Pedidos — Admin';
+    return () => { document.title = 'Pedidos — Admin'; };
+  }, [orders]);
 
   const fetchOrders = useCallback(async (silent = false) => {
     try {
       const data = await adminOrderService.getAll();
       setOrders(() => {
-        // Detect newly created orders
         if (prevCountRef.current !== null && data.length > prevCountRef.current) {
           setNewOrderAlert(true);
-          // Play a subtle beep if the browser allows it
+          const newestPending = data.find(o => o.status === 'PENDING');
+          if (newestPending) setAutoSelectedOrderId(newestPending.id);
           try {
             const ctx = new AudioContext();
             const osc = ctx.createOscillator();
@@ -47,19 +55,16 @@ export default function OrdersPage() {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // Polling
   useEffect(() => {
     const id = setInterval(() => fetchOrders(true), POLL_INTERVAL);
     return () => clearInterval(id);
   }, [fetchOrders]);
 
   const handleStatusChange = useCallback(async (orderId: string, newStatus: OrderStatus) => {
-    // Optimistic update
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
     );
@@ -69,7 +74,6 @@ export default function OrdersPage() {
         prev.map((o) => (o.id === orderId ? updated : o)),
       );
     } catch {
-      // Revert on failure
       fetchOrders(true);
     }
   }, [fetchOrders]);
@@ -93,6 +97,7 @@ export default function OrdersPage() {
         orders={orders}
         loading={loading}
         onStatusChange={handleStatusChange}
+        autoSelectedOrderId={autoSelectedOrderId}
       />
     </div>
   );
