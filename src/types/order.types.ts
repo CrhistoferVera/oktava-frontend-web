@@ -5,10 +5,12 @@
 export type OrderType = 'DELIVERY' | 'PICKUP';
 
 export type OrderStatus =
+  | 'PENDING_PAYMENT'
   | 'PENDING'
   | 'PREPARING'
   | 'ON_THE_WAY'
   | 'PICKED_UP'
+  | 'PAYMENT_FAILED'
   | 'CANCELLED'
   | 'COMPLETED';
 
@@ -98,7 +100,7 @@ export interface CreateOrderItemDto {
   selectedOptions?: CreateOrderItemOptionDto[];
 }
 
-export type PaymentMethod = 'QR' | 'CASH' | 'CARD';
+export type PaymentMethod = 'QR' | 'CASH' | 'NIUBIZ';
 
 export interface CreateOrderDto {
   orderType: OrderType;

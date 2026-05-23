@@ -19,21 +19,25 @@ function formatDate(d: string) {
 }
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
-  PENDING: "Pendiente",
-  PREPARING: "Preparando",
-  ON_THE_WAY: "En camino",
-  PICKED_UP: "Listo para recoger",
-  CANCELLED: "Cancelado",
-  COMPLETED: "Completado",
+  PENDING_PAYMENT: "Pago pendiente",
+  PENDING:         "Pendiente",
+  PREPARING:       "Preparando",
+  ON_THE_WAY:      "En camino",
+  PICKED_UP:       "Listo para recoger",
+  PAYMENT_FAILED:  "Pago fallido",
+  CANCELLED:       "Cancelado",
+  COMPLETED:       "Completado",
 };
 
 const STATUS_STYLE: Record<OrderStatus, string> = {
-  PENDING: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
-  PREPARING: "border-blue-500/40 bg-blue-500/10 text-blue-300",
-  ON_THE_WAY: "border-purple-500/40 bg-purple-500/10 text-purple-300",
-  PICKED_UP: "border-green-500/40 bg-green-500/10 text-green-300",
-  CANCELLED: "border-red-500/40 bg-red-500/10 text-red-300",
-  COMPLETED: "border-zinc-500/40 bg-zinc-500/10 text-zinc-400",
+  PENDING_PAYMENT: "border-orange-500/40 bg-orange-500/10 text-orange-300",
+  PENDING:         "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
+  PREPARING:       "border-blue-500/40 bg-blue-500/10 text-blue-300",
+  ON_THE_WAY:      "border-purple-500/40 bg-purple-500/10 text-purple-300",
+  PICKED_UP:       "border-green-500/40 bg-green-500/10 text-green-300",
+  PAYMENT_FAILED:  "border-red-500/40 bg-red-500/10 text-red-400",
+  CANCELLED:       "border-red-500/40 bg-red-500/10 text-red-300",
+  COMPLETED:       "border-zinc-500/40 bg-zinc-500/10 text-zinc-400",
 };
 
 export default function OrdersClient() {
