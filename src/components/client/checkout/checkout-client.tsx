@@ -643,8 +643,8 @@ export default function CheckoutClient() {
 
               {/* Items */}
               <div className="space-y-3">
-                {items.map(({ product, quantity }) => (
-                  <div key={product.id} className="flex items-center gap-3">
+                {items.map(({ _cartId, product, quantity }) => (
+                  <div key={_cartId} className="flex items-center gap-3">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-600/20 text-xs font-bold text-red-300">
                       {quantity}
                     </span>
