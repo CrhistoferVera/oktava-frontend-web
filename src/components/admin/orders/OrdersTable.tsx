@@ -26,21 +26,25 @@ interface Props {
 // ─── Badges ───────────────────────────────────────────────────────────────────
 
 const statusLabel: Record<OrderStatus, string> = {
-  PENDING:    'Pendiente',
-  PREPARING:  'Preparando',
-  ON_THE_WAY: 'En camino',
-  PICKED_UP:  'Para recoger',
-  CANCELLED:  'Cancelado',
-  COMPLETED:  'Completado',
+  PENDING_PAYMENT: 'Pago pendiente',
+  PENDING:         'Pendiente',
+  PREPARING:       'Preparando',
+  ON_THE_WAY:      'En camino',
+  PICKED_UP:       'Para recoger',
+  PAYMENT_FAILED:  'Pago fallido',
+  CANCELLED:       'Cancelado',
+  COMPLETED:       'Completado',
 };
 
 const statusStyles: Record<OrderStatus, string> = {
-  PENDING:    'bg-yellow-900/40 text-yellow-400 border border-yellow-700',
-  PREPARING:  'bg-blue-900/40 text-blue-400 border border-blue-700',
-  ON_THE_WAY: 'bg-red-900/40 text-red-400 border border-red-700',
-  PICKED_UP:  'bg-purple-900/40 text-purple-400 border border-purple-700',
-  CANCELLED:  'bg-gray-800 text-gray-400 border border-gray-600',
-  COMPLETED:  'bg-green-900 text-green-400 border border-green-600',
+  PENDING_PAYMENT: 'bg-orange-900/40 text-orange-400 border border-orange-700',
+  PENDING:         'bg-yellow-900/40 text-yellow-400 border border-yellow-700',
+  PREPARING:       'bg-blue-900/40 text-blue-400 border border-blue-700',
+  ON_THE_WAY:      'bg-red-900/40 text-red-400 border border-red-700',
+  PICKED_UP:       'bg-purple-900/40 text-purple-400 border border-purple-700',
+  PAYMENT_FAILED:  'bg-red-900/60 text-red-300 border border-red-700',
+  CANCELLED:       'bg-gray-800 text-gray-400 border border-gray-600',
+  COMPLETED:       'bg-green-900 text-green-400 border border-green-600',
 };
 
 function EstadoBadge({ status }: { readonly status: OrderStatus }) {

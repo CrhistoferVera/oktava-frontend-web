@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   MapPin,
@@ -21,6 +21,7 @@ import { useStorefrontCart } from "@/context/StorefrontCartContext";
 import { useAuth } from "@/context/AuthContext";
 import { addressService } from "@/services/address.service";
 import { orderService } from "@/services/order.service";
+import { paymentService } from "@/services/payment.service";
 import type { Address, AddressPayload } from "@/types/address.types";
 import type { CartItem } from "@/types/storefront.types";
 import type { CreateOrderItemDto, PaymentMethod } from "@/types/order.types";
@@ -77,10 +78,17 @@ function formatCurrency(v: number) {
   return `Bs. ${v.toFixed(0)}`;
 }
 
+// Niubiz solo disponible cuando el flag sandbox está activo explícitamente.
+// Para habilitar: NEXT_PUBLIC_ENABLE_NIUBIZ_SANDBOX=true en .env.local
+// Para deshabilitar (o en producción): eliminar o poner en false la variable.
+const NIUBIZ_SANDBOX_ENABLED = process.env.NEXT_PUBLIC_ENABLE_NIUBIZ_SANDBOX === 'true';
+
 const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; icon: React.ReactNode; desc: string }[] = [
-  { id: "QR", label: "Código QR", icon: <QrCode size={20} />, desc: "Paga escaneando el QR" },
-  { id: "CASH", label: "Efectivo", icon: <Banknote size={20} />, desc: "Paga al recibir tu pedido" },
-  { id: "CARD", label: "Tarjeta", icon: <CreditCard size={20} />, desc: "Visa / Mastercard" },
+  { id: "QR",   label: "Código QR", icon: <QrCode size={20} />,   desc: "Paga escaneando el QR" },
+  { id: "CASH", label: "Efectivo",  icon: <Banknote size={20} />, desc: "Paga al recibir tu pedido" },
+  ...(NIUBIZ_SANDBOX_ENABLED
+    ? [{ id: "NIUBIZ" as PaymentMethod, label: "Tarjeta", icon: <CreditCard size={20} />, desc: "Visa / Mastercard — Niubiz" }]
+    : []),
 ];
 
 type Step = "checkout" | "payment" | "success";
@@ -102,6 +110,15 @@ export default function CheckoutClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // ─── Niubiz ────────────────────────────────────────────────────────────────
+  const [niubizLoading, setNiubizLoading] = useState(false);
+  // Verdadero mientras el modal del widget de Niubiz está abierto.
+  // Bloquea el botón para impedir abrir una segunda sesión simultánea.
+  const [niubizWidgetOpen, setNiubizWidgetOpen] = useState(false);
+  // Ref estable para el callback del widget (evita closures estales con el estado de React).
+  // La firma solo necesita transactionToken; orderId viaja en el closure de handleNiubizPay.
+  const niubizCompleteRef = useRef<(transactionToken: string) => void>(() => {});
 
   useEffect(() => {
     addressService
@@ -125,7 +142,10 @@ export default function CheckoutClient() {
   }, [orderType, selectedAddress]);
 
   const outOfRange = orderType === "DELIVERY" && deliveryKm > MAX_DELIVERY_KM;
-  const deliveryFee = outOfRange ? 0 : calcDeliveryFee(deliveryKm);
+  const deliveryFee =
+    orderType === "DELIVERY" && !!selectedAddress && !outOfRange
+      ? calcDeliveryFee(deliveryKm)
+      : 0;
 
   const total = totalAmount + deliveryFee;
 
@@ -159,6 +179,134 @@ export default function CheckoutClient() {
     }
     if (items.length === 0) return;
     setStep("payment");
+  }
+
+  // ─── Helpers Niubiz ────────────────────────────────────────────────────────
+
+  function loadNiubizScript(scriptUrl: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (window.VisanetCheckout) { resolve(); return; }
+      const existing = document.getElementById('niubiz-sdk');
+      if (existing) { existing.addEventListener('load', () => resolve()); return; }
+      const el = document.createElement('script');
+      el.id = 'niubiz-sdk';
+      el.src = scriptUrl;
+      el.onload = () => resolve();
+      el.onerror = (ev) => {
+        // [DIAG] Loguear la URL exacta que falló y el evento de error
+        console.error('[Niubiz][DIAG] Script load FAILED');
+        console.error('[Niubiz][DIAG] scriptUrl intentada:', scriptUrl);
+        console.error('[Niubiz][DIAG] Abre esa URL en el navegador para ver si da 404/403/CORS');
+        console.error('[Niubiz][DIAG] ErrorEvent:', ev);
+        reject(new Error('No se pudo cargar el script de Niubiz'));
+      };
+      document.head.appendChild(el);
+    });
+  }
+
+  /**
+   * Flujo seguro de pago con Niubiz:
+   * 1. Llama al backend con el payload del checkout (sin amount).
+   *    El backend crea Order→PENDING_PAYMENT + Payment→pending y devuelve sessionKey + orderId.
+   * 2. Carga el script JS de Niubiz dinámicamente.
+   * 3. Configura y abre el widget de captura de tarjeta.
+   * 4. En el callback `complete`: llama a authorizeNiubizPayment(orderId, token).
+   *    El backend actualiza Payment→paid y Order→PENDING atómicamente.
+   *    El frontend NO crea la orden ni envía el monto.
+   */
+  async function handleNiubizPay() {
+    setNiubizLoading(true);
+    setError(null);
+    try {
+      // El backend calcula el monto y crea la orden (PENDING_PAYMENT) + Payment (pending).
+      // El frontend NO envía `amount` ni crea la orden después de autorizar.
+      const session = await paymentService.createNiubizSession({
+        orderType,
+        addressId: orderType === "DELIVERY" ? (selectedAddressId ?? undefined) : undefined,
+        notes: notes.trim() || undefined,
+        items: items.map(({ product, quantity }) => ({ productId: product.id, quantity })),
+      });
+
+      const { orderId, orderNumber, sessionKey, purchaseNumber, merchantId, amount } = session;
+
+      // [DIAG] Diagnosticar URL del script de Niubiz
+      const rawUrl = process.env.NEXT_PUBLIC_NIUBIZ_SCRIPT_URL ?? '';
+      console.log('[Niubiz][DIAG] NEXT_PUBLIC_NIUBIZ_SCRIPT_URL:', rawUrl || '(vacío / no definido)');
+      console.log('[Niubiz][DIAG] merchantId recibido del backend:', merchantId);
+
+      // Reemplaza el placeholder AAAA con el merchantId real.
+      const scriptUrl =
+        rawUrl.replace('AAAA', merchantId) ||
+        `https://static.niubiz.com.pe/apiform/${merchantId}/js/main.min.js`;
+
+      console.log('[Niubiz][DIAG] scriptUrl final:', scriptUrl);
+      if (scriptUrl.includes('AAAA')) {
+        console.error('[Niubiz][DIAG] ERROR: scriptUrl todavía contiene "AAAA" — el reemplazo falló. ¿merchantId es undefined?');
+      }
+      if (!merchantId) {
+        console.error('[Niubiz][DIAG] ERROR: merchantId es undefined/null — revisa NIUBIZ_MERCHANT_ID en el .env del backend.');
+      }
+
+      await loadNiubizScript(scriptUrl);
+
+      if (!window.VisanetCheckout) {
+        throw new Error('El widget de Niubiz no está disponible. Intenta recargando la página.');
+      }
+
+      // Captura orderId/orderNumber en el closure. El ref evita closures estales del estado.
+      niubizCompleteRef.current = async (transactionToken: string) => {
+        setNiubizWidgetOpen(false);
+        setNiubizLoading(true);
+        setError(null);
+        try {
+          // El backend busca el Payment por orderId, autoriza en Niubiz y actualiza
+          // Payment→paid + Order→PENDING en una sola transacción.
+          const result = await paymentService.authorizeNiubizPayment({
+            orderId,
+            transactionToken,
+          });
+
+          if (result.success) {
+            setOrderNumber(orderNumber);
+            clearCart();
+            setStep("success");
+          } else {
+            setError('El pago fue rechazado por el banco. Puedes intentar con otra tarjeta.');
+            setNiubizLoading(false);
+          }
+        } catch (e: any) {
+          setError(e?.response?.data?.message ?? 'El pago fue rechazado. Puedes intentarlo nuevamente.');
+          setNiubizLoading(false);
+        }
+      };
+
+      window.VisanetCheckout.configure({
+        sessiontoken: sessionKey,
+        channel: 'web',
+        merchantid: merchantId,
+        purchasenumber: purchaseNumber,
+        amount: amount.toFixed(2),
+        currency: 'PEN',
+        complete: (params) => {
+          niubizCompleteRef.current(params.transactionToken);
+        },
+        cancel: () => {
+          setNiubizWidgetOpen(false);
+          setNiubizLoading(false);
+          setError('Pago cancelado. La orden quedará en espera hasta que completes el pago.');
+        },
+      });
+
+      setNiubizWidgetOpen(true);
+      window.VisanetCheckout.open();
+      // El widget es modal externo; resetear loading para no bloquear el botón.
+      // niubizWidgetOpen permanece true hasta complete/cancel.
+      setNiubizLoading(false);
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? e?.message ?? 'No se pudo iniciar el pago con Niubiz.');
+      setNiubizLoading(false);
+      setNiubizWidgetOpen(false);
+    }
   }
 
   async function handleConfirmPayment() {
@@ -279,32 +427,58 @@ export default function CheckoutClient() {
           </div>
         )}
 
-        {paymentMethod === "CARD" && (
+        {paymentMethod === "NIUBIZ" && (
           <div className="rounded-2xl border border-white/10 bg-white/3 p-6 space-y-4">
-            <p className="font-semibold text-white">Datos de tarjeta</p>
-            <input
-              readOnly
-              placeholder="4111 1111 1111 1111"
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400 outline-none"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <input readOnly placeholder="MM/AA" className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400 outline-none" />
-              <input readOnly placeholder="CVV" className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400 outline-none" />
+            {/* Badge sandbox */}
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/40 bg-yellow-500/10 px-3 py-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+              <span className="text-xs font-semibold text-yellow-300 uppercase tracking-wide">Sandbox — sin cobro real</span>
             </div>
-            <p className="text-xs text-zinc-600">Este es un entorno de demostración. No se procesa ningún cobro real.</p>
+
+            <p className="text-xs text-yellow-400/80">
+              Niubiz está en modo sandbox. Flujo temporal de desarrollo — no usar en producción.
+            </p>
+
+            <div className="flex items-center gap-3">
+              <CreditCard size={28} className="text-blue-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-white">Pago con tarjeta</p>
+                <p className="text-xs text-zinc-500">Procesado por Niubiz (VisaNet Perú)</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-zinc-400">
+              Al hacer clic en <span className="text-white font-medium">"Pagar con Niubiz"</span> se abrirá el
+              formulario seguro de captura de tarjeta Visa / Mastercard.
+            </p>
+
+            <p className="text-xs text-zinc-600">
+              El carrito se limpiará únicamente cuando el pago sea confirmado exitosamente.
+            </p>
           </div>
         )}
 
         {error && <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>}
 
-        <button
-          type="button"
-          onClick={handleConfirmPayment}
-          disabled={isSubmitting}
-          className="w-full rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/30 transition hover:bg-red-500 disabled:opacity-60"
-        >
-          {isSubmitting ? "Procesando…" : "Confirmar pago"}
-        </button>
+        {paymentMethod === "NIUBIZ" ? (
+          <button
+            type="button"
+            onClick={handleNiubizPay}
+            disabled={niubizLoading || niubizWidgetOpen}
+            className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/30 transition hover:bg-blue-500 disabled:opacity-60"
+          >
+            {niubizLoading ? "Conectando con Niubiz…" : niubizWidgetOpen ? "Formulario abierto…" : "Pagar con Niubiz"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleConfirmPayment}
+            disabled={isSubmitting}
+            className="w-full rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/30 transition hover:bg-red-500 disabled:opacity-60"
+          >
+            {isSubmitting ? "Procesando…" : "Confirmar pago"}
+          </button>
+        )}
       </div>
     );
   }
