@@ -13,6 +13,19 @@ import type { CartItem, Product, SelectedOptionGroup } from "@/types/storefront.
 
 const CART_KEY = "oktava_cart";
 
+function sameOptions(a: SelectedOptionGroup[], b: SelectedOptionGroup[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortById = (arr: SelectedOptionGroup[]) =>
+    [...arr].sort((x, y) => x.groupId.localeCompare(y.groupId));
+  return sortById(a).every((ga, i) => {
+    const gb = sortById(b)[i];
+    if (ga.groupId !== gb.groupId) return false;
+    const ids = (g: SelectedOptionGroup) =>
+      [...g.items].map(o => o.optionId).sort((a, b) => a.localeCompare(b)).join(',');
+    return ids(ga) === ids(gb);
+  });
+}
+
 function loadCart(): CartItem[] {
   try {
     const raw = localStorage.getItem(CART_KEY);
@@ -86,15 +99,22 @@ export function StorefrontCartProvider({ children }: Readonly<{ children: ReactN
           ];
         }
 
-        // Has options — always a new line item
-        const extraPrice = (selectedOptions ?? [])
-          .flatMap((g) => g.items)
-          .reduce((sum, o) => sum + o.extraPrice, 0);
+        // Has options — deduplicate by same product + same options
+        const opts = selectedOptions ?? [];
+        const existing = prev.find(
+          (i) => i.product.id === product.id && sameOptions(i.selectedOptions, opts),
+        );
+        if (existing) {
+          return prev.map((i) =>
+            i._cartId === existing._cartId ? { ...i, quantity: i.quantity + 1 } : i,
+          );
+        }
 
+        const extraPrice = opts.flatMap((g) => g.items).reduce((sum, o) => sum + o.extraPrice, 0);
         const cartId = `${product.id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
         return [
           ...prev,
-          { _cartId: cartId, product, quantity: 1, selectedOptions: selectedOptions ?? [], extraPrice },
+          { _cartId: cartId, product, quantity: 1, selectedOptions: opts, extraPrice },
         ];
       });
     },
