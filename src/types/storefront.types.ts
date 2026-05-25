@@ -4,6 +4,7 @@ export interface ProductCategory {
   id: string;
   slug: string;
   label: string;
+  imageUrl: string | null;
   description?: string;
 }
 

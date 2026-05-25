@@ -1,16 +1,32 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, Package } from "lucide-react";
+import { ShoppingBag, Package, Menu, ChevronDown } from "lucide-react";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 import { useActiveOrders } from "@/context/ActiveOrdersContext";
 import { UserMenuDropdown } from "@/components/client/layout/user-menu-dropdown";
+import { DrawerMenu } from "@/components/ui/DrawerMenu";
 
 const navigationLinks = [
   { href: "/", label: "Inicio" },
   { href: "/menu", label: "Menu" },
   { href: "/orders", label: "Mis pedidos" },
+];
+
+const desktopDropdowns = [
+  {
+    label: "La Oktava",
+    children: [{ label: "Sobre nosotros", href: "#" }],
+  },
+  {
+    label: "Legal",
+    children: [
+      { label: "Términos y condiciones", href: "#" },
+      { label: "Política de privacidad", href: "#" },
+    ],
+  },
 ];
 
 function formatNavLinkClass(isActive: boolean) {
@@ -22,30 +38,145 @@ function formatNavLinkClass(isActive: boolean) {
   ].join(" ");
 }
 
+function DesktopDropdown({ label, items }: Readonly<{ label: string; items: { label: string; href: string }[] }>) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/20 hover:text-white"
+      >
+        {label}
+        <ChevronDown
+          size={14}
+          className={`text-zinc-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-2 w-52 rounded-xl border border-white/10 bg-[#111] py-1 shadow-xl shadow-black/60 overflow-hidden z-50">
+          {items.map((child) => (
+            <Link
+              key={child.label}
+              href={child.href}
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              {child.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StorefrontNavbar() {
   const pathname = usePathname();
   const { totalItems, openCart, hydrated } = useStorefrontCart();
   const { activeOrders, openDrawer } = useActiveOrders();
   const cartBadge = hydrated && totalItems > 0;
   const activeCount = activeOrders.length;
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <header className="border-b border-white/10 bg-black/70 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-full border border-red-500/60 bg-red-500/20 text-sm font-bold text-red-100">
-              O
-            </span>
+    <>
+      <header className="border-b border-white/10 bg-black/70 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6">
+          {/* Logo + mobile actions */}
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-full border border-red-500/60 bg-red-500/20 text-sm font-bold text-red-100">
+                O
+              </span>
+              <div className="leading-tight">
+                <p className="text-2xl uppercase tracking-[0.16em] [font-family:var(--font-display)]">
+                  Oktava
+                </p>
+              </div>
+            </Link>
 
-            <div className="leading-tight">
-              <p className="text-2xl uppercase tracking-[0.16em] [font-family:var(--font-display)]">
-                Oktava
-              </p>
+            {/* Mobile only */}
+            <div className="flex items-center gap-2 md:hidden">
+              {activeCount > 0 && (
+                <button
+                  type="button"
+                  onClick={openDrawer}
+                  className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
+                  aria-label="Pedidos activos"
+                >
+                  <Package size={18} />
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {activeCount}
+                  </span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={openCart}
+                className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
+                aria-label="Carrito"
+              >
+                <ShoppingBag size={18} />
+                {cartBadge && (
+                  <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 text-[11px] font-semibold text-white">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+              <UserMenuDropdown />
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
+                aria-label="Menú"
+              >
+                <Menu size={18} />
+              </button>
             </div>
-          </Link>
+          </div>
 
-          <div className="flex items-center gap-2 md:hidden">
+          {/* Nav links */}
+          <nav className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+            {navigationLinks.map((link) => {
+              const isActive =
+                pathname === link.href || pathname.startsWith(`${link.href}/`);
+              return (
+                <Link key={link.href} href={link.href} className={formatNavLinkClass(isActive)}>
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            {/* Desktop extra items — hidden on mobile */}
+            <div className="hidden md:contents">
+              {desktopDropdowns.map((item) => (
+                <DesktopDropdown key={item.label} label={item.label} items={item.children} />
+              ))}
+              <button
+                type="button"
+                className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-[#e50909] transition-colors hover:bg-red-500/20"
+              >
+                Ubica la Oktava
+              </button>
+            </div>
+          </nav>
+
+          {/* Desktop right actions */}
+          <div className="hidden items-center gap-2 md:flex">
             {activeCount > 0 && (
               <button
                 type="button"
@@ -75,55 +206,10 @@ export function StorefrontNavbar() {
             <UserMenuDropdown />
           </div>
         </div>
+      </header>
 
-        <nav className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-          {navigationLinks.map((link) => {
-            const isActive =
-              pathname === link.href || pathname.startsWith(`${link.href}/`);
-
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={formatNavLinkClass(isActive)}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="hidden items-center gap-2 md:flex">
-          {activeCount > 0 && (
-            <button
-              type="button"
-              onClick={openDrawer}
-              className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
-              aria-label="Pedidos activos"
-            >
-              <Package size={18} />
-              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {activeCount}
-              </span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={openCart}
-            className="relative rounded-full border border-white/10 bg-white/5 p-2 text-zinc-200 transition-colors hover:text-white"
-            aria-label="Carrito"
-          >
-            <ShoppingBag size={18} />
-            {cartBadge && (
-              <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 text-[11px] font-semibold text-white">
-                {totalItems}
-              </span>
-            )}
-          </button>
-
-          <UserMenuDropdown />
-        </div>
-      </div>
-    </header>
+      {/* Rendered outside header so the backdrop doesn't cover the navbar */}
+      <DrawerMenu visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+    </>
   );
 }

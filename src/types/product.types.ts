@@ -6,6 +6,7 @@ export type Category = {
   slug: string;
   imageUrl: string | null;
   isActive: boolean;
+  sortOrder: number;
 };
 
 // ─── OptionGroup / Option ─────────────────────────────────────────────────────
@@ -56,12 +57,14 @@ export type CategoryAdminItem = Category & { productCount: number };
 export type CategoryPayload = {
   name: string;
   imageUrl?: string;
+  sortOrder?: number;
 };
 
 export type UpdateCategoryPayload = {
   name?: string;
   isActive?: boolean;
   imageUrl?: string;
+  sortOrder?: number;
 };
 
 // ─── Filter ───────────────────────────────────────────────────────────────────

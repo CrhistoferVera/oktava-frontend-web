@@ -71,7 +71,7 @@ function mapOptionGroup(g: ApiOptionGroup): StorefrontOptionGroup {
 export const storefrontService = {
   async getCategories(): Promise<ProductCategory[]> {
     const data = await apiFetch<ApiCategory[]>("/categories");
-    return data.map((c) => ({ id: c.id, slug: c.slug, label: c.name }));
+    return data.map((c) => ({ id: c.id, slug: c.slug, label: c.name, imageUrl: c.imageUrl }));
   },
 
   async getProducts(): Promise<Product[]> {
