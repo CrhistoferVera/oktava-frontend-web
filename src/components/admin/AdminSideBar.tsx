@@ -33,6 +33,7 @@ export const AdminSideBar = ({ isOpen, onClose }: SidebarProps) => {
     { label: 'Dashboard',     href: '/admin/dashboard',     icon: <BarChart3   className="w-5 h-5" />, section: 'Principal' },
     { label: 'Pedidos',       href: '/admin/orders',        icon: <ScrollText  className="w-5 h-5" /> },
     { label: 'Menú',          href: '/admin/menu',          icon: <Drumstick   className="w-5 h-5" /> },
+    { label: 'Categorías',    href: '/admin/categories',   icon: <Drumstick   className="w-5 h-5" /> },
     { label: 'Clientes',      href: '/admin/clients',       icon: <User        className="w-5 h-5" /> },
     { label: 'Reportes',      href: '/admin/reports',       icon: <LineChart   className="w-5 h-5" />, section: 'Sistema' },
     { label: 'Configuración', href: '/admin/configuration', icon: <Settings    className="w-5 h-5" /> },
