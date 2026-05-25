@@ -3,6 +3,7 @@ import { StorefrontNavbar } from "@/components/client/layout/storefront-navbar";
 import { CartDrawer } from "@/components/client/layout/cart-drawer";
 import { CartFloatingBar } from "@/components/client/layout/cart-floating-bar";
 import { ActiveOrdersDrawer } from "@/components/client/layout/active-orders-drawer";
+import { ActiveOrderBar } from "@/components/client/layout/active-order-bar";
 
 export function StorefrontShell({ children }: { readonly children: ReactNode }) {
   return (
@@ -12,7 +13,10 @@ export function StorefrontShell({ children }: { readonly children: ReactNode }) 
         <div className="absolute left-1/2 top-[-240px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-red-600/25 blur-[150px]" />
       </div>
 
-      <StorefrontNavbar />
+      <div className="sticky top-0 z-40">
+        <StorefrontNavbar />
+        <ActiveOrderBar />
+      </div>
 
       <main className="relative mx-auto w-full max-w-6xl px-4 pb-32 pt-8 md:px-6 md:pt-12">
         {children}

@@ -30,7 +30,7 @@ export function StorefrontNavbar() {
   const activeCount = activeOrders.length;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-md">
+    <header className="border-b border-white/10 bg-black/70 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
