@@ -21,12 +21,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirige al login si el token expira o es inválido
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      window.location.href = '/sign-in';
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
     return Promise.reject(error);
   }
