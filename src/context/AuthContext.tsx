@@ -43,13 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  // Cerrar sesión automáticamente si alguna petición recibe 401
-  useEffect(() => {
-    const handler = () => logout();
-    window.addEventListener('auth:unauthorized', handler);
-    return () => window.removeEventListener('auth:unauthorized', handler);
-  }, [logout]);
-
   // Iniciar sesión
   const login = useCallback(async (token: string, userData: User) => {
     await createSession(token, userData); // Guarda las cookies en el servidor
@@ -64,6 +57,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     router.push('/sign-in');
   }, [router]);
+
+  // Cerrar sesión automáticamente si alguna petición recibe 401
+  useEffect(() => {
+    const handler = () => logout();
+    globalThis.addEventListener('auth:unauthorized', handler);
+    return () => globalThis.removeEventListener('auth:unauthorized', handler);
+  }, [logout]);
 
   // Actualizar datos del usuario en estado y cookie sin re-autenticar
   const updateUser = useCallback(async (partial: Partial<User>) => {
