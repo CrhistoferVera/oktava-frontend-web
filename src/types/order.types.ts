@@ -7,6 +7,7 @@ export type OrderType = 'DELIVERY' | 'PICKUP';
 export type OrderStatus =
   | 'PENDING_PAYMENT'
   | 'PENDING'
+  | 'ACCEPTED'
   | 'PREPARING'
   | 'ON_THE_WAY'
   | 'PICKED_UP'

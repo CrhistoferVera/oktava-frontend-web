@@ -9,6 +9,7 @@ const colorClasses: Record<string, { border: string; text: string; bg: string }>
     'purple': { border: 'border-purple-400',  text: 'text-purple-400', bg: 'bg-purple-200/20' },
     'orange': { border: 'border-orange-400',  text: 'text-orange-400', bg: 'bg-orange-200/20' },
     'gray':   { border: 'border-gray-400',    text: 'text-gray-200',   bg: 'bg-gray-200/10' },
+    'teal':   { border: 'border-teal-400',    text: 'text-teal-400',   bg: 'bg-teal-400/20' },
 }
 
 export const OrderStatusCard = ({

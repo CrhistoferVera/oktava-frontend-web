@@ -18,13 +18,13 @@ const navigationLinks = [
 const desktopDropdowns = [
   {
     label: "La Oktava",
-    children: [{ label: "Sobre nosotros", href: "#" }],
+    children: [{ label: "Sobre nosotros", href: "/sobre-nosotros" }],
   },
   {
     label: "Legal",
     children: [
-      { label: "Términos y condiciones", href: "#" },
-      { label: "Política de privacidad", href: "#" },
+      { label: "Términos y condiciones", href: "/legal/terminos-y-condiciones" },
+      { label: "Política de privacidad", href: "/legal/politica-de-privacidad" },
     ],
   },
 ];
@@ -94,7 +94,7 @@ export function StorefrontNavbar() {
 
   return (
     <>
-      <header className="border-b border-white/10 bg-black/70 backdrop-blur-md">
+      <header className="relative z-1 border-b border-white/10 bg-black/70 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6">
           {/* Logo + mobile actions */}
           <div className="flex items-center justify-between">
@@ -150,7 +150,7 @@ export function StorefrontNavbar() {
           </div>
 
           {/* Nav links */}
-          <nav className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <nav className="flex items-center gap-2 overflow-x-auto md:overflow-visible pb-1 md:pb-0">
             {navigationLinks.map((link) => {
               const isActive =
                 pathname === link.href || pathname.startsWith(`${link.href}/`);

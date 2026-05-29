@@ -1,4 +1,4 @@
-import { Hourglass, ScanSearch, Truck, CheckCircle, XCircle } from "lucide-react"
+import { CheckSquare, Hourglass, ScanSearch, Truck, CheckCircle, XCircle } from "lucide-react"
 import { OrderStatusCard } from "./OrderStatusCard"
 import type { Order } from "@/types/order.types"
 
@@ -24,15 +24,16 @@ export const OrderStatusList = ({ orders }: Props) => {
     .filter(o => o.status === 'COMPLETED')
     .reduce((sum, o) => sum + Number(o.total), 0);
   const activeCount = orders.filter(o =>
-    o.status === 'PENDING' || o.status === 'PREPARING' || o.status === 'ON_THE_WAY'
+    o.status === 'PENDING' || o.status === 'ACCEPTED' || o.status === 'PREPARING' || o.status === 'ON_THE_WAY'
   ).length;
 
   const cards = [
-    { name: 'Pendientes',    value: count('PENDING'),    icon: <Hourglass   size={32} color="orange" />, color: 'orange' },
-    { name: 'Preparando',    value: count('PREPARING'),  icon: <ScanSearch  size={32} color="blue"   />, color: 'blue'   },
-    { name: 'En camino',     value: count('ON_THE_WAY'), icon: <Truck       size={32} color="red"    />, color: 'red'    },
-    { name: 'Entregados hoy',value: count('COMPLETED'),  icon: <CheckCircle size={32} color="green"  />, color: 'green'  },
-    { name: 'Cancelados',    value: count('CANCELLED'),  icon: <XCircle     size={32} color="gray"   />, color: 'gray'   },
+    { name: 'Pendientes',    value: count('PENDING'),    icon: <Hourglass   size={28} color="orange"  />, color: 'orange' },
+    { name: 'Aceptados',     value: count('ACCEPTED'),   icon: <CheckSquare size={28} color="#2dd4bf" />, color: 'teal'   },
+    { name: 'Preparando',    value: count('PREPARING'),  icon: <ScanSearch  size={28} color="blue"    />, color: 'blue'   },
+    { name: 'En camino',     value: count('ON_THE_WAY'), icon: <Truck       size={28} color="#a855f7" />, color: 'purple' },
+    { name: 'Entregados hoy',value: count('COMPLETED'),  icon: <CheckCircle size={28} color="green"   />, color: 'green'  },
+    { name: 'Cancelados',    value: count('CANCELLED'),  icon: <XCircle     size={28} color="gray"    />, color: 'gray'   },
   ]
 
   return (
@@ -50,7 +51,7 @@ export const OrderStatusList = ({ orders }: Props) => {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
         {cards.map((card) => (
           <OrderStatusCard key={card.name} {...card} value={String(card.value)} />
         ))}

@@ -22,14 +22,14 @@ export function DrawerMenu({ visible, onClose }: Props) {
     {
       key: 'oktava',
       label: 'La Oktava',
-      children: [{ label: 'Sobre nosotros', href: '#' }],
+      children: [{ label: 'Sobre nosotros', href: '/sobre-nosotros' }],
     },
     {
       key: 'legal',
       label: 'Legal',
       children: [
-        { label: 'Términos y condiciones', href: '#' },
-        { label: 'Política de privacidad', href: '#' },
+        { label: 'Términos y condiciones', href: '/legal/terminos-y-condiciones' },
+        { label: 'Política de privacidad', href: '/legal/politica-de-privacidad' },
       ],
     },
   ];

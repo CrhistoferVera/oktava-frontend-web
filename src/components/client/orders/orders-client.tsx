@@ -21,6 +21,7 @@ function formatDate(d: string) {
 const STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "Pago pendiente",
   PENDING:         "Pendiente",
+  ACCEPTED:        "Aceptado",
   PREPARING:       "Preparando",
   ON_THE_WAY:      "En camino",
   PICKED_UP:       "Listo para recoger",
@@ -32,6 +33,7 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 const STATUS_STYLE: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "border-orange-500/40 bg-orange-500/10 text-orange-300",
   PENDING:         "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
+  ACCEPTED:        "border-teal-500/40 bg-teal-500/10 text-teal-300",
   PREPARING:       "border-blue-500/40 bg-blue-500/10 text-blue-300",
   ON_THE_WAY:      "border-purple-500/40 bg-purple-500/10 text-purple-300",
   PICKED_UP:       "border-green-500/40 bg-green-500/10 text-green-300",

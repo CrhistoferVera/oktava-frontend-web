@@ -16,6 +16,7 @@ interface Props {
 const statusLabel: Record<OrderStatus, string> = {
   PENDING_PAYMENT: 'Pago pendiente',
   PENDING:         'Pendiente',
+  ACCEPTED:        'Aceptado',
   PREPARING:       'Preparando',
   ON_THE_WAY:      'En camino',
   PICKED_UP:       'Para recoger',
@@ -27,6 +28,7 @@ const statusLabel: Record<OrderStatus, string> = {
 const statusStyles: Record<OrderStatus, string> = {
   PENDING_PAYMENT: 'bg-orange-900/40 text-orange-400 border border-orange-700',
   PENDING:         'bg-yellow-900/40 text-yellow-400 border border-yellow-700',
+  ACCEPTED:        'bg-teal-900/40 text-teal-400 border border-teal-700',
   PREPARING:       'bg-blue-900/40 text-blue-400 border border-blue-700',
   ON_THE_WAY:      'bg-red-900/40 text-red-400 border border-red-700',
   PICKED_UP:       'bg-purple-900/40 text-purple-400 border border-purple-700',
@@ -37,7 +39,8 @@ const statusStyles: Record<OrderStatus, string> = {
 
 function getNextStatuses(status: OrderStatus, orderType: OrderType): OrderStatus[] {
   switch (status) {
-    case 'PENDING':    return ['PREPARING', 'CANCELLED'];
+    case 'PENDING':    return ['ACCEPTED', 'CANCELLED'];
+    case 'ACCEPTED':   return ['PREPARING', 'CANCELLED'];
     case 'PREPARING':  return orderType === 'DELIVERY' ? ['ON_THE_WAY', 'CANCELLED'] : ['PICKED_UP', 'CANCELLED'];
     case 'ON_THE_WAY': return ['COMPLETED'];
     case 'PICKED_UP':  return ['COMPLETED'];
@@ -46,7 +49,8 @@ function getNextStatuses(status: OrderStatus, orderType: OrderType): OrderStatus
 }
 
 const actionLabel: Partial<Record<OrderStatus, string>> = {
-  PREPARING:  'Confirmar preparación',
+  ACCEPTED:   'Aceptar pedido',
+  PREPARING:  'Iniciar preparación',
   ON_THE_WAY: 'Marcar en camino',
   PICKED_UP:  'Listo para recoger',
   COMPLETED:  'Marcar completado',
@@ -55,7 +59,7 @@ const actionLabel: Partial<Record<OrderStatus, string>> = {
 
 // ─── StatusDropdown ───────────────────────────────────────────────────────────
 
-const ALL_STATUSES: OrderStatus[] = ['PENDING', 'PREPARING', 'ON_THE_WAY', 'PICKED_UP', 'CANCELLED', 'COMPLETED'];
+const ALL_STATUSES: OrderStatus[] = ['PENDING', 'ACCEPTED', 'PREPARING', 'ON_THE_WAY', 'PICKED_UP', 'CANCELLED', 'COMPLETED'];
 
 function StatusDropdown({ status, onSelect }: {
   readonly status: OrderStatus;

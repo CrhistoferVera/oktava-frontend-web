@@ -28,6 +28,7 @@ interface Props {
 const statusLabel: Record<OrderStatus, string> = {
   PENDING_PAYMENT: 'Pago pendiente',
   PENDING:         'Pendiente',
+  ACCEPTED:        'Aceptado',
   PREPARING:       'Preparando',
   ON_THE_WAY:      'En camino',
   PICKED_UP:       'Para recoger',
@@ -39,6 +40,7 @@ const statusLabel: Record<OrderStatus, string> = {
 const statusStyles: Record<OrderStatus, string> = {
   PENDING_PAYMENT: 'bg-orange-900/40 text-orange-400 border border-orange-700',
   PENDING:         'bg-yellow-900/40 text-yellow-400 border border-yellow-700',
+  ACCEPTED:        'bg-teal-900/40 text-teal-400 border border-teal-700',
   PREPARING:       'bg-blue-900/40 text-blue-400 border border-blue-700',
   ON_THE_WAY:      'bg-red-900/40 text-red-400 border border-red-700',
   PICKED_UP:       'bg-purple-900/40 text-purple-400 border border-purple-700',
