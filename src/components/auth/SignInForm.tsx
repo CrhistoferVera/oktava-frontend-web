@@ -59,7 +59,7 @@ export const SignInForm = () => {
         {/* Grid bg */}
         <div className="pointer-events-none absolute inset-0 lg:left-1/2 oktava-grid-bg opacity-20" />
 
-        {/* Back button — mobile */}
+        {/* Back button */}
         <div className="relative p-5 lg:p-8 flex items-center justify-between">
           <button
             type="button"
@@ -89,6 +89,7 @@ export const SignInForm = () => {
               </p>
             </div>
 
+            {/* Error de credenciales */}
             {error && (
               <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-300">
                 {error}

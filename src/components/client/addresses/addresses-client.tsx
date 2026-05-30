@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { MapPin, Plus } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { AuthRequiredModal } from '@/components/ui/AuthRequiredModal';
 import { addressService } from '@/services/address.service';
 import type { Address, AddressPayload } from '@/types/address.types';
 import { AddressCard } from './address-card';
@@ -11,6 +13,7 @@ import { AddressFormModal } from './address-form-modal';
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 
 export default function AddressesClient() {
+  const { user, isLoading: authLoading } = useAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,13 +21,62 @@ export default function AddressesClient() {
   const [editing, setEditing] = useState<Address | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
+  // Abrir modal automáticamente si llega a la página sin sesión
   useEffect(() => {
+    if (!authLoading && !user) {
+      setAuthModalOpen(true);
+    }
+  }, [authLoading, user]);
+
+  // Cargar direcciones solo cuando hay sesión
+  useEffect(() => {
+    if (authLoading || !user) return;
     addressService.getAll()
       .then(setAddresses)
       .catch(() => setError('No se pudieron cargar tus direcciones.'))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [authLoading, user]);
+
+  // Skeleton mientras auth carga
+  if (authLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        {[1, 2].map((n) => (
+          <div key={n} className="h-44 rounded-2xl bg-white/5 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  // Sin sesión: modal + fallback si el modal se cierra
+  if (!user) {
+    return (
+      <>
+        <AuthRequiredModal
+          open={authModalOpen}
+          message="Necesitas iniciar sesión o registrarte para guardar tus direcciones."
+          confirmHref="/sign-in?redirect=/addresses"
+          onCancel={() => setAuthModalOpen(false)}
+        />
+        {!authModalOpen && (
+          <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+            <p className="font-semibold text-white text-base">
+              Inicia sesión para ver y guardar tus direcciones
+            </p>
+            <button
+              type="button"
+              onClick={() => setAuthModalOpen(true)}
+              className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-500"
+            >
+              Iniciar sesión
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
 
   function openCreate() {
     setEditing(null);

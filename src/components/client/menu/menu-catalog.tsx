@@ -45,7 +45,7 @@ export function MenuCatalog({ categories, products }: MenuCatalogProps) {
       {filteredProducts.length === 0 ? (
         <MenuEmptyState />
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 min-[390px]:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-5">
           {filteredProducts.map((product) => (
             <CustomerProductCard key={product.id} product={product} />
           ))}

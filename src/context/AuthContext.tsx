@@ -9,8 +9,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, userData: User, redirectTo?: string) => Promise<void>;
-  logout: () => Promise<void>;
+  login: (token: string, userData: User, returnTo?: string) => Promise<void>;
+  logout: (reason?: string) => Promise<void>;
   updateUser: (partial: Partial<User>) => Promise<void>;
 }
 
@@ -44,26 +44,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Iniciar sesión
-  const login = useCallback(async (token: string, userData: User) => {
-    await createSession(token, userData); // Guarda las cookies en el servidor
-    setUser(userData); // Actualiza el estado local
-    const redirectTo = userData.role === 'ADMIN' ? '/admin/dashboard' : '/menu';
-    router.push(redirectTo);
+  // returnTo: ruta a la que volver después del login (p.ej. /checkout, /orders)
+  const login = useCallback(async (token: string, userData: User, returnTo?: string) => {
+    await createSession(token, userData);
+    setUser(userData);
+    const target =
+      userData.role === 'ADMIN' ? '/admin/dashboard' : (returnTo ?? '/menu');
+    router.push(target);
   }, [router]);
 
   // Cerrar sesión
-  const logout = useCallback(async () => {
-    await removeSession(); // Borra las cookies en el servidor
+  // reason: 'expired' para mostrar mensaje de sesión expirada en /sign-in
+  const logout = useCallback(async (reason?: string) => {
+    await removeSession();
     setUser(null);
-    router.push('/sign-in');
+    const path = reason ? `/sign-in?reason=${reason}` : '/sign-in';
+    router.push(path);
   }, [router]);
 
-  // Cerrar sesión automáticamente si alguna petición recibe 401
+  // Limpiar sesión cuando una petición recibe 401.
+  // No navega aquí: el SessionExpiredModal en el layout muestra el modal primero.
   useEffect(() => {
-    const handler = () => logout();
+    const handler = async () => {
+      await removeSession();
+      setUser(null);
+      globalThis.dispatchEvent(new CustomEvent('auth:session-expired'));
+    };
     globalThis.addEventListener('auth:unauthorized', handler);
     return () => globalThis.removeEventListener('auth:unauthorized', handler);
-  }, [logout]);
+  }, []); // removeSession es un import estable; setUser es un setter estable
 
   // Actualizar datos del usuario en estado y cookie sin re-autenticar
   const updateUser = useCallback(async (partial: Partial<User>) => {

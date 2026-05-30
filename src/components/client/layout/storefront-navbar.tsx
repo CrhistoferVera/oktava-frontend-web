@@ -2,17 +2,18 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ShoppingBag, Package, Menu, ChevronDown } from "lucide-react";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 import { useActiveOrders } from "@/context/ActiveOrdersContext";
+import { useAuth } from "@/context/AuthContext";
 import { UserMenuDropdown } from "@/components/client/layout/user-menu-dropdown";
 import { DrawerMenu } from "@/components/ui/DrawerMenu";
+import { AuthRequiredModal } from "@/components/ui/AuthRequiredModal";
 
-const navigationLinks = [
+const PUBLIC_NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/menu", label: "Menu" },
-  { href: "/orders", label: "Mis pedidos" },
 ];
 
 const desktopDropdowns = [
@@ -86,11 +87,24 @@ function DesktopDropdown({ label, items }: Readonly<{ label: string; items: { la
 
 export function StorefrontNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
   const { totalItems, openCart, hydrated } = useStorefrontCart();
   const { activeOrders, openDrawer } = useActiveOrders();
   const cartBadge = hydrated && totalItems > 0;
   const activeCount = activeOrders.length;
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  function handleMisPedidos() {
+    if (user) {
+      router.push("/orders");
+    } else {
+      setAuthModalOpen(true);
+    }
+  }
+
+  const isPedidosActive = pathname === "/orders" || pathname.startsWith("/orders/");
 
   return (
     <>
@@ -151,7 +165,8 @@ export function StorefrontNavbar() {
 
           {/* Nav links */}
           <nav className="flex items-center gap-2 overflow-x-auto md:overflow-visible pb-1 md:pb-0">
-            {navigationLinks.map((link) => {
+            {/* Links públicos sin auth */}
+            {PUBLIC_NAV_LINKS.map((link) => {
               const isActive =
                 pathname === link.href || pathname.startsWith(`${link.href}/`);
               return (
@@ -161,17 +176,26 @@ export function StorefrontNavbar() {
               );
             })}
 
+            {/* Mis pedidos — verifica auth antes de navegar */}
+            <button
+              type="button"
+              onClick={handleMisPedidos}
+              className={formatNavLinkClass(isPedidosActive)}
+            >
+              Mis pedidos
+            </button>
+
             {/* Desktop extra items — hidden on mobile */}
             <div className="hidden md:contents">
               {desktopDropdowns.map((item) => (
                 <DesktopDropdown key={item.label} label={item.label} items={item.children} />
               ))}
-              <button
-                type="button"
+              <Link
+                href="/ubica-a-oktava"
                 className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-[#e50909] transition-colors hover:bg-red-500/20"
               >
                 Ubica la Oktava
-              </button>
+              </Link>
             </div>
           </nav>
 
@@ -210,6 +234,14 @@ export function StorefrontNavbar() {
 
       {/* Rendered outside header so the backdrop doesn't cover the navbar */}
       <DrawerMenu visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {/* Modal de auth requerida para "Mis pedidos" */}
+      <AuthRequiredModal
+        open={authModalOpen}
+        message="Necesitas iniciar sesión o registrarte para ver tus pedidos."
+        confirmHref="/sign-in?redirect=/orders"
+        onCancel={() => setAuthModalOpen(false)}
+      />
     </>
   );
 }

@@ -152,7 +152,7 @@ export default function ProfilePage() {
       <div className="rounded-3xl border border-white/6 overflow-hidden">
         <button
           type="button"
-          onClick={logout}
+          onClick={() => logout()}
           className="flex w-full items-center gap-4 px-6 py-4 text-left transition-colors hover:bg-red-500/5 group"
         >
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-red-500/10 border border-red-500/20 group-hover:border-red-500/30 transition-colors">

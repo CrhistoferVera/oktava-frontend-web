@@ -103,13 +103,14 @@ export function DrawerMenu({ visible, onClose }: Props) {
           })}
 
           {/* Ubica la Oktava */}
-          <button
+          <Link
+            href="/ubica-a-oktava"
             onClick={onClose}
             className="w-full flex items-center justify-between px-5 py-5 border-b border-[#1e1e1e] cursor-pointer"
           >
             <span className="text-[#e50909] text-base font-bold">Ubica la Oktava</span>
             <ChevronRight size={20} color="#e50909" />
-          </button>
+          </Link>
         </div>
       </div>
     </>

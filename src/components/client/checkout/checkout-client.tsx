@@ -19,6 +19,7 @@ import dynamic from "next/dynamic";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 import { useAuth } from "@/context/AuthContext";
+import { AuthRequiredModal } from "@/components/ui/AuthRequiredModal";
 import { addressService } from "@/services/address.service";
 import { orderService } from "@/services/order.service";
 import { paymentService } from "@/services/payment.service";
@@ -112,6 +113,9 @@ export default function CheckoutClient() {
   const [error, setError] = useState<string | null>(null);
 
   // ─── Niubiz ────────────────────────────────────────────────────────────────
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // ─── Niubiz ────────────────────────────────────────────────────────────────
   const [niubizLoading, setNiubizLoading] = useState(false);
   // Verdadero mientras el modal del widget de Niubiz está abierto.
   // Bloquea el botón para impedir abrir una segunda sesión simultánea.
@@ -165,10 +169,19 @@ export default function CheckoutClient() {
 
   function handleProceed() {
     setError(null);
-    if (!user?.phoneVerified) {
+
+    // 1. Sin sesión → modal (no redirige, no crea pedido, no limpia carrito)
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+
+    // 2. Logueado pero sin teléfono verificado → flujo de verificación (no login)
+    if (!user.phoneVerified) {
       router.push("/verify-phone?redirect=/checkout");
       return;
     }
+
     if (orderType === "DELIVERY" && !selectedAddressId) {
       setError("Selecciona una dirección de entrega.");
       return;
@@ -703,6 +716,14 @@ export default function CheckoutClient() {
           />
         </APIProvider>
       )}
+
+      {/* Modal de auth requerida al intentar pagar sin sesión */}
+      <AuthRequiredModal
+        open={authModalOpen}
+        message="Necesitas iniciar sesión o registrarte para realizar un pedido."
+        confirmHref="/sign-in?redirect=/checkout"
+        onCancel={() => setAuthModalOpen(false)}
+      />
     </>
   );
 }

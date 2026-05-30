@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { AuthRequiredModal } from "@/components/ui/AuthRequiredModal";
 import { OrdersEmptyState } from "@/components/client/orders/orders-empty-state";
 import { orderService } from "@/services/order.service";
 import type { Order, OrderStatus } from "@/types/order.types";
@@ -43,17 +45,69 @@ const STATUS_STYLE: Record<OrderStatus, string> = {
 };
 
 export default function OrdersClient() {
+  const { user, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
+  // Abrir modal automáticamente si el usuario llega a la página sin sesión
   useEffect(() => {
+    if (!authLoading && !user) {
+      setAuthModalOpen(true);
+    }
+  }, [authLoading, user]);
+
+  // Cargar pedidos solo cuando hay sesión activa
+  useEffect(() => {
+    if (authLoading || !user) return;
     orderService
       .getMyOrders()
       .then(setOrders)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [authLoading, user]);
 
+  // Skeleton mientras auth carga
+  if (authLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  // Sin sesión: modal + mensaje estático si el modal se cierra
+  if (!user) {
+    return (
+      <>
+        <AuthRequiredModal
+          open={authModalOpen}
+          message="Necesitas iniciar sesión o registrarte para ver tus pedidos."
+          confirmHref="/sign-in?redirect=/orders"
+          onCancel={() => setAuthModalOpen(false)}
+        />
+        {/* Si el usuario cierra el modal, mostrar un CTA en lugar del contenido vacío */}
+        {!authModalOpen && (
+          <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+            <p className="font-semibold text-white text-base">
+              Inicia sesión para ver tus pedidos
+            </p>
+            <button
+              type="button"
+              onClick={() => setAuthModalOpen(true)}
+              className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-red-500"
+            >
+              Iniciar sesión
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Con sesión: lista de pedidos
   return (
     <section className="space-y-6">
       <header className="space-y-1">

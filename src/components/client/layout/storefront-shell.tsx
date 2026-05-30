@@ -4,6 +4,7 @@ import { CartDrawer } from "@/components/client/layout/cart-drawer";
 import { CartFloatingBar } from "@/components/client/layout/cart-floating-bar";
 import { ActiveOrdersDrawer } from "@/components/client/layout/active-orders-drawer";
 import { ActiveOrderBar } from "@/components/client/layout/active-order-bar";
+import { SessionExpiredModal } from "@/components/client/layout/session-expired-modal";
 
 export function StorefrontShell({ children }: { readonly children: ReactNode }) {
   return (
@@ -25,6 +26,9 @@ export function StorefrontShell({ children }: { readonly children: ReactNode }) 
       <CartFloatingBar />
       <CartDrawer />
       <ActiveOrdersDrawer />
+
+      {/* Modal global de sesión expirada — escucha auth:session-expired */}
+      <SessionExpiredModal />
     </div>
   );
 }

@@ -117,12 +117,12 @@ export default function SobreNosotrosPage() {
             >
               Ver menú <ArrowRight size={15} />
             </Link>
-            <button
-              type="button"
+            <Link
+              href="/ubica-a-oktava"
               className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-zinc-100 transition-all hover:border-white/30 hover:bg-white/10"
             >
               Ubícanos
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -295,12 +295,12 @@ export default function SobreNosotrosPage() {
           >
             Ir al menú <ArrowRight size={15} />
           </Link>
-          <button
-            type="button"
-            className="rounded-2xl border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-semibold text-zinc-100 transition-all hover:border-white/30 hover:bg-white/10"
+          <Link
+            href="/ubica-a-oktava"
+            className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-semibold text-zinc-100 transition-all hover:border-white/30 hover:bg-white/10"
           >
             Ubícanos
-          </button>
+          </Link>
         </div>
       </section>
     </div>

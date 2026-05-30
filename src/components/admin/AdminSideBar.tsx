@@ -97,7 +97,7 @@ export const AdminSideBar = ({ isOpen, onClose }: SidebarProps) => {
               <div className="font-medium text-white text-sm truncate">{user?.firstName}</div>
               <div className="text-xs text-gray-500">{user?.role}</div>
             </div>
-            <button onClick={logout} className="text-red-500 hover:text-red-400 transition-colors">
+            <button onClick={() => logout()} className="text-red-500 hover:text-red-400 transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
