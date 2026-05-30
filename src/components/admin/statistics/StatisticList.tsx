@@ -1,41 +1,43 @@
-import { StatisticCardProps } from "@/types/statistic.types"
-import { StatisticCard } from "./StatisticCard"
+import { StatisticCard } from './StatisticCard';
+import type { DashboardStats } from '@/types/statistic.types';
 
 interface StatisticListProps {
-    data?: StatisticCardProps[];
-};
-const initialStats: StatisticCardProps[] = [
+  stats: DashboardStats;
+}
+
+export const StatisticList = ({ stats }: StatisticListProps) => {
+  const cards = [
     {
-        title: 'PEDIDOS HOY',
-        value: '148',
-        valueColor: 'text-red-800',
-        emoji: '🧾'
+      title: 'PEDIDOS HOY',
+      value: String(stats.todayCount),
+      valueColor: 'text-red-400',
+      emoji: '🧾',
     },
     {
-        title: 'INGRESOS HOY',
-        value: '$2,450',
-        valueColor: 'text-green-800',
-        emoji: '💰'
+      title: 'INGRESOS HOY',
+      value: `Bs. ${stats.todayRevenue.toFixed(0)}`,
+      valueColor: 'text-green-400',
+      emoji: '💰',
     },
     {
-        title: 'TIEMPO PROM',
-        value: '34 min',
-        valueColor: 'text-yellow-800',
-        emoji: '⏱️'
+      title: 'ACTIVOS AHORA',
+      value: String(stats.activeCount),
+      valueColor: 'text-yellow-400',
+      emoji: '⚡',
     },
     {
-      title: 'SATISFACCION',
-      value: '4.5',
-      valueColor: 'text-white',
-      emoji: '⭐'
-    }
-]
-export const StatisticList = ({ data = initialStats }: StatisticListProps) => {
+      title: 'PAGO PENDIENTE',
+      value: String(stats.pendingPayments),
+      valueColor: 'text-orange-400',
+      emoji: '⏳',
+    },
+  ];
+
   return (
-    <div className="flex flex-col  md:flex-row gap-8">
-      {data.map((stat, index) => (
-        <StatisticCard key={index} {...stat} />
+    <div className="flex flex-col md:flex-row gap-8">
+      {cards.map((card, index) => (
+        <StatisticCard key={index} {...card} />
       ))}
     </div>
-  )
-}
+  );
+};
