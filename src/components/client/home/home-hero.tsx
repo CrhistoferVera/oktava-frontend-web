@@ -4,21 +4,24 @@ import { ArrowRight, Clock3, MapPin } from "lucide-react";
 export function HomeHero() {
   return (
     <section className="relative overflow-hidden rounded-3xl min-h-[500px] md:min-h-[540px] flex items-center">
-      {/* Food background image */}
+      {/* Hero background */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?q=80&w=1600&auto=format&fit=crop"
+        src="/hero-bg.jpg"
         alt=""
         aria-hidden
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="absolute inset-0 h-full w-full object-cover object-center opacity-30"
       />
 
-      {/* Gradient overlay: opaque on left, transparent on right */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/30" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      {/* Overlays — mismo stack que la landing */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 oktava-grid-bg opacity-40 pointer-events-none" />
 
-      {/* Red glow accent */}
-      <div className="absolute -left-24 top-1/2 -translate-y-1/2 h-[480px] w-[480px] rounded-full bg-red-700/25 blur-[120px] pointer-events-none" />
+      {/* Glow orbs */}
+      <div className="absolute -top-40 -right-40 h-125 w-125 rounded-full bg-red-600/[0.07] blur-[140px] pointer-events-none" />
+      <div className="absolute -left-24 top-1/2 -translate-y-1/2 h-[480px] w-[480px] rounded-full bg-red-700/20 blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-64 w-96 rounded-full bg-red-600/5 blur-[100px] pointer-events-none" />
 
       {/* Content */}
       <div className="relative px-6 py-12 md:px-12 md:py-16 w-full max-w-2xl space-y-6">
@@ -71,11 +74,6 @@ export function HomeHero() {
         </div>
       </div>
 
-      {/* Price callout badge — bottom right */}
-      <div className="absolute bottom-8 right-8 hidden md:flex flex-col items-center justify-center h-28 w-28 rounded-full bg-red-600 border-4 border-red-400/30 shadow-2xl shadow-red-900/60 rotate-6">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-red-100">desde</p>
-        <p className="text-3xl font-black text-white leading-none [font-family:var(--font-display)]">Bs. 36</p>
-      </div>
     </section>
   );
 }

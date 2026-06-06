@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { useRouter } from 'next/navigation';
 import { GoogleButton } from './GoogleButton';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PasswordInput } from '../ui/PasswordInput';
 import { PasswordRequirements } from '../ui/PasswordRequirements';
 import { PhoneInput } from '../ui/PhoneInput';
@@ -53,18 +54,22 @@ export const SignUpForm = () => {
     <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=1200&auto=format&fit=crop"
+        src="/hero-bg.jpg"
         alt=""
         aria-hidden
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="absolute inset-0 h-full w-full object-cover object-center opacity-30"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-      <div className="absolute -top-10 -right-10 h-80 w-80 rounded-full bg-red-700/25 blur-[100px] pointer-events-none" />
+      {/* Overlay — mismo que la landing */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20 pointer-events-none" />
+      {/* Grid */}
+      <div className="absolute inset-0 oktava-grid-bg opacity-40 pointer-events-none" />
+      {/* Glow orbs */}
+      <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-red-600/[0.07] blur-[140px] pointer-events-none" />
+      <div className="absolute -left-24 top-1/2 -translate-y-1/2 h-[400px] w-[400px] rounded-full bg-red-700/20 blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-64 w-96 rounded-full bg-red-600/5 blur-[100px] pointer-events-none" />
       <div className="relative flex flex-col justify-between h-full p-10">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-full border border-red-500/60 bg-red-500/20 text-sm font-bold text-red-100">O</span>
-          <span className="text-2xl uppercase tracking-[0.16em] text-white [font-family:var(--font-display)]">Oktava</span>
+        <Link href="/">
+          <Image src="/oktava_logo.png" alt="Oktava" width={160} height={40} className="object-contain" />
         </Link>
         <div className="space-y-4">
           <p className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-300">
@@ -235,9 +240,8 @@ export const SignUpForm = () => {
           >
             <ArrowLeft size={15} /> Volver al inicio
           </button>
-          <div className="lg:hidden flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-full border border-red-500/60 bg-red-500/20 text-xs font-bold text-red-100">O</span>
-            <span className="text-lg uppercase tracking-widest text-white [font-family:var(--font-display)]">Oktava</span>
+          <div className="lg:hidden">
+            <Image src="/oktava_logo.png" alt="Oktava" width={110} height={28} className="object-contain" />
           </div>
         </div>
 

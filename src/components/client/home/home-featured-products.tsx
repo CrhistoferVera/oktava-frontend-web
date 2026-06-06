@@ -50,28 +50,6 @@ export function HomeFeaturedProducts({ products }: HomeFeaturedProductsProps) {
         <ArrowRight size={14} />
       </Link>
 
-      {/* Promo strip */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-red-950 to-red-900 border border-red-700/30 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-0 justify-between">
-        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-red-500/20 blur-[60px] pointer-events-none" />
-        <div className="relative">
-          <p className="text-xs font-semibold uppercase tracking-widest text-red-300 mb-1">
-            Oferta limitada
-          </p>
-          <h3 className="text-2xl md:text-3xl font-black text-white [font-family:var(--font-display)] uppercase">
-            Combo Fuego — solo Bs. 129
-          </h3>
-          <p className="text-sm text-red-200/70 mt-1">
-            Pollo entero + papas familiares + 2 bebidas. Disponible hoy.
-          </p>
-        </div>
-        <Link
-          href="/menu"
-          className="relative shrink-0 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-red-700 shadow-lg transition-all hover:bg-zinc-100 hover:scale-105"
-        >
-          Pedir ahora
-          <ArrowRight size={15} />
-        </Link>
-      </div>
     </section>
   );
 }

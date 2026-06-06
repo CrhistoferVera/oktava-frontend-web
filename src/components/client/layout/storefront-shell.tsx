@@ -15,12 +15,12 @@ export function StorefrontShell({ children }: { readonly children: ReactNode }) 
         <div className="absolute left-1/2 top-[-240px] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-red-600/25 blur-[150px]" />
       </div>
 
-      <div className="sticky top-0 z-40">
+      <div className="fixed top-0 left-0 right-0 z-40">
         <StorefrontNavbar />
         <ActiveOrderBar />
       </div>
 
-      <main className="relative mx-auto w-full max-w-6xl px-4 pb-16 pt-8 md:px-6 md:pt-12">
+      <main className="relative mx-auto w-full max-w-6xl px-4 pb-16 pt-20 md:px-6 md:pt-24">
         {children}
       </main>
 
