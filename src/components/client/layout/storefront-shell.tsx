@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { StorefrontNavbar } from "@/components/client/layout/storefront-navbar";
+import { StorefrontFooter } from "@/components/client/layout/storefront-footer";
 import { CartDrawer } from "@/components/client/layout/cart-drawer";
 import { CartFloatingBar } from "@/components/client/layout/cart-floating-bar";
 import { ActiveOrdersDrawer } from "@/components/client/layout/active-orders-drawer";
@@ -19,9 +20,11 @@ export function StorefrontShell({ children }: { readonly children: ReactNode }) 
         <ActiveOrderBar />
       </div>
 
-      <main className="relative mx-auto w-full max-w-6xl px-4 pb-32 pt-8 md:px-6 md:pt-12">
+      <main className="relative mx-auto w-full max-w-6xl px-4 pb-16 pt-8 md:px-6 md:pt-12">
         {children}
       </main>
+
+      <StorefrontFooter />
 
       <CartFloatingBar />
       <CartDrawer />

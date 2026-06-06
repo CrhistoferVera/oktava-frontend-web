@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShoppingBag, Package, Menu, ChevronDown } from "lucide-react";
+import { ShoppingBag, Package, Menu } from "lucide-react";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 import { useActiveOrders } from "@/context/ActiveOrdersContext";
 import { useAuth } from "@/context/AuthContext";
@@ -17,19 +17,6 @@ const PUBLIC_NAV_LINKS = [
   { href: "/menu", label: "Menu" },
 ];
 
-const desktopDropdowns = [
-  {
-    label: "La Oktava",
-    children: [{ label: "Sobre nosotros", href: "/sobre-nosotros" }],
-  },
-  {
-    label: "Legal",
-    children: [
-      { label: "Términos y condiciones", href: "/legal/terminos-y-condiciones" },
-      { label: "Política de privacidad", href: "/legal/politica-de-privacidad" },
-    ],
-  },
-];
 
 function formatNavLinkClass(isActive: boolean) {
   return [
@@ -38,52 +25,6 @@ function formatNavLinkClass(isActive: boolean) {
       ? "border-red-500 bg-red-500/20 text-white"
       : "border-white/10 bg-white/5 text-zinc-300 hover:border-white/20 hover:text-white",
   ].join(" ");
-}
-
-function DesktopDropdown({ label, items }: Readonly<{ label: string; items: { label: string; href: string }[] }>) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/20 hover:text-white"
-      >
-        {label}
-        <ChevronDown
-          size={14}
-          className={`text-zinc-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && (
-        <div className="absolute left-0 top-full mt-2 w-52 rounded-xl border border-white/10 bg-[#111] py-1 shadow-xl shadow-black/60 overflow-hidden z-50">
-          {items.map((child) => (
-            <Link
-              key={child.label}
-              href={child.href}
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
-            >
-              {child.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function StorefrontNavbar() {
@@ -188,9 +129,6 @@ export function StorefrontNavbar() {
 
             {/* Desktop extra items — hidden on mobile */}
             <div className="hidden md:contents">
-              {desktopDropdowns.map((item) => (
-                <DesktopDropdown key={item.label} label={item.label} items={item.children} />
-              ))}
               <Link
                 href="/ubica-a-oktava"
                 className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-[#e50909] transition-colors hover:bg-red-500/20"
