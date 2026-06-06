@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ShoppingBag, Package, Menu, ChevronDown } from "lucide-react";
@@ -112,15 +113,15 @@ export function StorefrontNavbar() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6">
           {/* Logo + mobile actions */}
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-red-500/60 bg-red-500/20 text-sm font-bold text-red-100">
-                O
-              </span>
-              <div className="leading-tight">
-                <p className="text-2xl uppercase tracking-[0.16em] [font-family:var(--font-display)]">
-                  Oktava
-                </p>
-              </div>
+            <Link href="/">
+              <Image
+                src="/oktava_logo.png"
+                alt="Oktava"
+                width={160}
+                height={40}
+                className="object-contain"
+                priority
+              />
             </Link>
 
             {/* Mobile only */}
