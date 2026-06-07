@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -75,8 +76,24 @@ function calcDeliveryFee(km: number) {
   return 20;
 }
 
+const PLACEHOLDER =
+  "https://images.unsplash.com/photo-1512152272829-e3139592d56f?q=80&w=400&auto=format&fit=crop";
+
 function formatCurrency(v: number) {
   return `Bs. ${v.toFixed(0)}`;
+}
+
+function OptionsSummary({ item }: Readonly<{ item: CartItem }>) {
+  if (item.selectedOptions.length === 0) return null;
+  const parts = item.selectedOptions.flatMap((g) => g.items.map((o) => o.name));
+  return (
+    <p className="mt-0.5 text-xs leading-snug text-zinc-500">
+      {parts.join(" · ")}
+      {item.extraPrice > 0 && (
+        <span className="ml-1 text-red-400">+{formatCurrency(item.extraPrice)}</span>
+      )}
+    </p>
+  );
 }
 
 // Niubiz solo disponible cuando el flag sandbox está activo explícitamente.
@@ -655,16 +672,37 @@ export default function CheckoutClient() {
               <p className="text-sm font-semibold text-white">Resumen del pedido</p>
 
               {/* Items */}
-              <div className="space-y-3">
-                {items.map(({ _cartId, product, quantity }) => (
-                  <div key={_cartId} className="flex items-center gap-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-600/20 text-xs font-bold text-red-300">
-                      {quantity}
-                    </span>
-                    <p className="flex-1 text-sm text-zinc-300 truncate">{product.name}</p>
-                    <p className="text-sm font-semibold text-white shrink-0">
-                      {formatCurrency((product.price ?? 0) * quantity)}
-                    </p>
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div key={item._cartId} className="flex gap-3 rounded-xl border border-white/6 bg-white/3 p-2.5">
+                    {/* Image */}
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                      <img
+                        src={item.product.imageUrl ?? PLACEHOLDER}
+                        alt={item.product.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex flex-1 flex-col justify-center min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold leading-tight text-white truncate">
+                            {item.product.name}
+                          </p>
+                          <OptionsSummary item={item} />
+                        </div>
+                        <div className="flex flex-col items-end shrink-0 gap-1">
+                          <span className="text-sm font-bold text-white">
+                            {formatCurrency(((item.product.price ?? 0) + item.extraPrice) * item.quantity)}
+                          </span>
+                          <span className="flex h-5 w-5 items-center justify-center rounded-md bg-red-600/20 text-[11px] font-bold text-red-300">
+                            {item.quantity}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ShoppingBag, ArrowRight } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useStorefrontCart } from "@/context/StorefrontCartContext";
 
 function formatCurrency(value: number) {
@@ -9,8 +10,9 @@ function formatCurrency(value: number) {
 
 export function CartFloatingBar() {
   const { totalItems, totalAmount, openCart, hydrated } = useStorefrontCart();
+  const pathname = usePathname();
 
-  if (!hydrated || totalItems === 0) return null;
+  if (!hydrated || totalItems === 0 || pathname === "/checkout") return null;
 
   return (
     <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md">
