@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AuthRequiredModal } from "@/components/ui/AuthRequiredModal";
 import { OrdersEmptyState } from "@/components/client/orders/orders-empty-state";
+import { OrderDetailDrawer } from "@/components/client/orders/order-detail-drawer";
 import { orderService } from "@/services/order.service";
 import type { Order, OrderStatus } from "@/types/order.types";
 
@@ -49,6 +51,7 @@ export default function OrdersClient() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   // Abrir modal automáticamente si el usuario llega a la página sin sesión
   useEffect(() => {
@@ -120,18 +123,23 @@ export default function OrdersClient() {
         </p>
       </header>
 
-      {loading ? (
+      {loading && (
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />
           ))}
         </div>
-      ) : orders.length === 0 ? (
-        <OrdersEmptyState />
-      ) : (
+      )}
+      {!loading && orders.length === 0 && <OrdersEmptyState />}
+      {!loading && orders.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
           {orders.map((order) => (
-            <article key={order.id} className="oktava-surface rounded-2xl p-5 space-y-4">
+            <button
+              key={order.id}
+              type="button"
+              className="oktava-surface w-full rounded-2xl p-5 space-y-4 text-left cursor-pointer transition hover:border-white/20 hover:bg-white/5"
+              onClick={() => setSelectedOrderId(order.id)}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-lg font-semibold text-white">#{order.orderNumber}</p>
                 <span
@@ -146,13 +154,23 @@ export default function OrdersClient() {
                   {(order.items?.length ?? 0) === 1 ? "producto" : "productos"}
                 </p>
                 <p>{formatDate(order.createdAt)}</p>
-                <p className="capitalize">{order.orderType === "DELIVERY" ? "Delivery" : "Recojo en local"}</p>
+                <p>{order.orderType === "DELIVERY" ? "Delivery" : "Recojo en local"}</p>
               </div>
-              <p className="text-xl font-bold text-white">{formatCurrency(Number(order.total))}</p>
-            </article>
+              <div className="flex items-center justify-between">
+                <p className="text-xl font-bold text-white">{formatCurrency(Number(order.total))}</p>
+                <span className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition">
+                  Ver detalle <ChevronRight size={14} />
+                </span>
+              </div>
+            </button>
           ))}
         </div>
       )}
+
+      <OrderDetailDrawer
+        orderId={selectedOrderId}
+        onClose={() => setSelectedOrderId(null)}
+      />
     </section>
   );
 }

@@ -14,6 +14,11 @@ export const orderService = {
     return data;
   },
 
+  async getById(id: string): Promise<Order> {
+    const { data } = await api.get<Order>(`/orders/${id}`);
+    return data;
+  },
+
   async confirmReceived(id: string): Promise<Order> {
     const { data } = await api.patch<Order>(`/orders/${id}/confirm-received`);
     return data;
