@@ -167,8 +167,8 @@ export default function MenuPage() {
       setError(null);
       await productService.permanentlyDeleteProduct(product.id);
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
-    } catch {
-      setError('No se pudo eliminar el producto. Intenta de nuevo.');
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? 'No se pudo eliminar el producto. Intenta de nuevo.');
     } finally {
       setDeletingId(null);
     }

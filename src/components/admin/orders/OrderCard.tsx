@@ -86,7 +86,10 @@ function timeClass(mins: number, status: OrderStatus): string {
 
 function itemsSummary(items?: Order['items']): string {
   if (!items || items.length === 0) return '';
-  const preview = items.slice(0, 3).map(i => `${i.quantity}× ${i.productName}`);
+  const preview = items.slice(0, 3).map(i => {
+    const firstOpt = i.selectedOptions?.[0]?.optionName;
+    return firstOpt ? `${i.quantity}× ${i.productName} (${firstOpt})` : `${i.quantity}× ${i.productName}`;
+  });
   const remaining = items.length - 3;
   return preview.join(', ') + (remaining > 0 ? ` +${remaining}` : '');
 }
@@ -309,8 +312,9 @@ function ExpandedActions({ order, onStatusChange }: {
 // ─── Print ticket ─────────────────────────────────────────────────────────────
 
 function buildTicketHtml(order: Order): string {
-  const clientName = order.user ? `${order.user.firstName} ${order.user.lastName}` : '—';
-  const phone      = order.user?.phone ?? null;
+  const clientName  = order.user ? `${order.user.firstName} ${order.user.lastName}` : '—';
+  const phone       = order.user?.phone ?? null;
+  const adminName   = order.attendedBy ? `${order.attendedBy.firstName} ${order.attendedBy.lastName}` : null;
   const hora       = new Date(order.createdAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
   const fecha      = new Date(order.createdAt).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
   const total      = Number(order.total);
@@ -387,6 +391,7 @@ ${warningHtml}
   <div class="section-title">Cliente</div>
   <div style="font-weight:600;">${clientName}</div>
   ${phone ? `<div style="color:#555;">${phone}</div>` : ''}
+  ${adminName ? `<div style="color:#555;font-size:11px;margin-top:4px;">Atendido por: ${adminName}</div>` : ''}
 </div>
 ${addressHtml}
 <div class="section">
@@ -568,6 +573,20 @@ export function OrderCard({ order, isExpanded, onToggle, onStatusChange, classNa
 
             {/* COLUMNA DERECHA — cliente / dirección / totales / acciones / imprimir */}
             <div className="px-4 py-3 border-t border-zinc-800 md:border-t-0 flex flex-col gap-3">
+
+              {/* Admin que atiende */}
+              <div>
+                <SectionLabel>Atendido por</SectionLabel>
+                <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+                  {order.attendedBy ? (
+                    <span className="text-xs font-semibold text-teal-400">
+                      {order.attendedBy.firstName} {order.attendedBy.lastName}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-zinc-600">Sin asignar</span>
+                  )}
+                </div>
+              </div>
 
               {/* Cliente */}
               <div>

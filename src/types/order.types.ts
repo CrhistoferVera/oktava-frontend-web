@@ -65,6 +65,12 @@ export interface OrderUser {
   phone: string | null;
 }
 
+export interface OrderAttendedBy {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -76,6 +82,7 @@ export interface Order {
   deliveryFee: string;
   total: string;
   notes: string | null;
+  attendedAt: string | null;
   createdAt: string;
   updatedAt: string;
 
@@ -83,6 +90,7 @@ export interface Order {
   user?: OrderUser;
   address?: OrderAddress | null;
   items?: OrderItem[];
+  attendedBy?: OrderAttendedBy | null;
 }
 
 // ─────────────────────────────────────────────
