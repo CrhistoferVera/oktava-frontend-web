@@ -14,7 +14,7 @@ import { useAuth } from '@/context/AuthContext';
 import { orderService } from '@/services/order.service';
 import type { Order, OrderStatus } from '@/types/order.types';
 
-const ACTIVE_STATUSES: OrderStatus[] = ['PENDING', 'PREPARING', 'ON_THE_WAY', 'PICKED_UP'];
+const ACTIVE_STATUSES: OrderStatus[] = ['PENDING', 'ACCEPTED', 'PREPARING', 'ON_THE_WAY', 'PICKED_UP'];
 const POLL_MS = 8000;
 
 interface ActiveOrdersContextValue {

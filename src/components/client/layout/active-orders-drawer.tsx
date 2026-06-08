@@ -1,16 +1,17 @@
 'use client';
 
-import { X, Package, ChefHat, Truck, Store, CheckCircle, Clock, CheckCheck } from 'lucide-react';
+import { X, Package, ChefHat, Truck, Store, CheckCircle, Clock, CheckCheck, ThumbsUp } from 'lucide-react';
 import { useActiveOrders } from '@/context/ActiveOrdersContext';
 import type { Order, OrderStatus } from '@/types/order.types';
 
 // ─── Status stepper config ────────────────────────────────────────────────────
 
-const DELIVERY_STEPS: OrderStatus[] = ['PENDING', 'PREPARING', 'ON_THE_WAY', 'COMPLETED'];
-const PICKUP_STEPS: OrderStatus[] = ['PENDING', 'PREPARING', 'PICKED_UP', 'COMPLETED'];
+const DELIVERY_STEPS: OrderStatus[] = ['PENDING', 'ACCEPTED', 'PREPARING', 'ON_THE_WAY', 'COMPLETED'];
+const PICKUP_STEPS: OrderStatus[] = ['PENDING', 'ACCEPTED', 'PREPARING', 'PICKED_UP', 'COMPLETED'];
 
 const STEP_LABEL: Partial<Record<OrderStatus, string>> = {
   PENDING:    'Recibido',
+  ACCEPTED:   'Aceptado',
   PREPARING:  'Preparando',
   ON_THE_WAY: 'En camino',
   PICKED_UP:  'Listo',
@@ -18,15 +19,17 @@ const STEP_LABEL: Partial<Record<OrderStatus, string>> = {
 };
 
 const STEP_ICON: Partial<Record<OrderStatus, React.ReactNode>> = {
-  PENDING:    <Clock    size={12} />,
-  PREPARING:  <ChefHat  size={12} />,
-  ON_THE_WAY: <Truck    size={12} />,
-  PICKED_UP:  <Store    size={12} />,
+  PENDING:    <Clock       size={12} />,
+  ACCEPTED:   <ThumbsUp    size={12} />,
+  PREPARING:  <ChefHat     size={12} />,
+  ON_THE_WAY: <Truck       size={12} />,
+  PICKED_UP:  <Store       size={12} />,
   COMPLETED:  <CheckCircle size={12} />,
 };
 
 const STATUS_COLOR: Partial<Record<OrderStatus, string>> = {
   PENDING:    'text-yellow-400 border-yellow-500/40 bg-yellow-500/10',
+  ACCEPTED:   'text-teal-400   border-teal-500/40   bg-teal-500/10',
   PREPARING:  'text-blue-400   border-blue-500/40   bg-blue-500/10',
   ON_THE_WAY: 'text-purple-400 border-purple-500/40 bg-purple-500/10',
   PICKED_UP:  'text-green-400  border-green-500/40  bg-green-500/10',
@@ -34,6 +37,7 @@ const STATUS_COLOR: Partial<Record<OrderStatus, string>> = {
 
 const STATUS_LABEL: Partial<Record<OrderStatus, string>> = {
   PENDING:    'Pendiente',
+  ACCEPTED:   'Aceptado',
   PREPARING:  'Preparando',
   ON_THE_WAY: 'En camino',
   PICKED_UP:  'Listo para recoger',

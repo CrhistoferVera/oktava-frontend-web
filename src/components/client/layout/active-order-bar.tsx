@@ -6,6 +6,7 @@ import type { OrderStatus } from '@/types/order.types';
 
 const BAR_STYLE: Partial<Record<OrderStatus, { dot: string; border: string; text: string; label: string }>> = {
   PENDING:    { dot: 'bg-yellow-400', border: 'border-l-yellow-500', text: 'text-yellow-400', label: 'Pedido enviado' },
+  ACCEPTED:   { dot: 'bg-teal-400',   border: 'border-l-teal-500',   text: 'text-teal-400',   label: 'Pedido aceptado' },
   PREPARING:  { dot: 'bg-blue-400',   border: 'border-l-blue-500',   text: 'text-blue-400',   label: 'Preparando tu pedido' },
   ON_THE_WAY: { dot: 'bg-purple-400', border: 'border-l-purple-500', text: 'text-purple-400', label: 'En camino' },
   PICKED_UP:  { dot: 'bg-green-400',  border: 'border-l-green-500',  text: 'text-green-400',  label: 'Listo para recoger' },
