@@ -51,7 +51,7 @@ export default function OrdersClient() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Abrir modal automáticamente si el usuario llega a la página sin sesión
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function OrdersClient() {
               key={order.id}
               type="button"
               className="oktava-surface w-full rounded-2xl p-5 space-y-4 text-left cursor-pointer transition hover:border-white/20 hover:bg-white/5"
-              onClick={() => setSelectedOrderId(order.id)}
+              onClick={() => setSelectedOrder(order)}
             >
               <div className="flex items-center justify-between">
                 <p className="text-lg font-semibold text-white">#{order.orderNumber}</p>
@@ -168,8 +168,8 @@ export default function OrdersClient() {
       )}
 
       <OrderDetailDrawer
-        orderId={selectedOrderId}
-        onClose={() => setSelectedOrderId(null)}
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
       />
     </section>
   );
