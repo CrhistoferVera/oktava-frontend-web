@@ -12,6 +12,14 @@ import { AddressFormModal } from './address-form-modal';
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 
+/** Extrae el mensaje de error del backend (NestJS), con un fallback. */
+function getErrorMessage(error: unknown, fallback: string): string {
+  const msg = (error as { response?: { data?: { message?: string | string[] } } })
+    ?.response?.data?.message;
+  if (Array.isArray(msg)) return msg.join('\n');
+  return msg ?? fallback;
+}
+
 export default function AddressesClient() {
   const { user, isLoading: authLoading } = useAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -20,6 +28,7 @@ export default function AddressesClient() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Address | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -80,17 +89,20 @@ export default function AddressesClient() {
 
   function openCreate() {
     setEditing(null);
+    setSaveError(null);
     setModalOpen(true);
   }
 
   function openEdit(address: Address) {
     setEditing(address);
+    setSaveError(null);
     setModalOpen(true);
   }
 
   async function handleSave(payload: AddressPayload) {
     try {
       setIsSaving(true);
+      setSaveError(null);
       if (editing) {
         const updated = await addressService.update(editing.id, payload);
         setAddresses((prev) => prev.map((a) => (a.id === editing.id ? updated : a)));
@@ -99,8 +111,9 @@ export default function AddressesClient() {
         setAddresses((prev) => [...prev, created]);
       }
       setModalOpen(false);
-    } catch {
-      setError('No se pudo guardar la dirección. Intentá de nuevo.');
+    } catch (e) {
+      // Se muestra dentro del modal para que el usuario no pierda lo que escribió.
+      setSaveError(getErrorMessage(e, 'No se pudo guardar la dirección. Intentá de nuevo.'));
     } finally {
       setIsSaving(false);
     }
@@ -112,8 +125,8 @@ export default function AddressesClient() {
       setDeletingId(id);
       await addressService.remove(id);
       setAddresses((prev) => prev.filter((a) => a.id !== id));
-    } catch {
-      setError('No se pudo eliminar la dirección.');
+    } catch (e) {
+      setError(getErrorMessage(e, 'No se pudo eliminar la dirección.'));
     } finally {
       setDeletingId(null);
     }
@@ -207,6 +220,7 @@ export default function AddressesClient() {
           isOpen={modalOpen}
           initialData={editing}
           isSaving={isSaving}
+          errorMessage={saveError}
           onClose={() => !isSaving && setModalOpen(false)}
           onSave={handleSave}
         />

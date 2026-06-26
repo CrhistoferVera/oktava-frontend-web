@@ -18,6 +18,7 @@ interface AddressFormModalProps {
   readonly isOpen: boolean;
   readonly initialData: Address | null;
   readonly isSaving: boolean;
+  readonly errorMessage?: string | null;
   readonly onClose: () => void;
   readonly onSave: (payload: AddressPayload) => void;
 }
@@ -57,7 +58,7 @@ function MapPanner({ panTarget }: { readonly panTarget: { lat: number; lng: numb
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
-export function AddressFormModal({ isOpen, initialData, isSaving, onClose, onSave }: AddressFormModalProps) {
+export function AddressFormModal({ isOpen, initialData, isSaving, errorMessage, onClose, onSave }: AddressFormModalProps) {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [markerPos, setMarkerPos] = useState(DEFAULT_CENTER);
@@ -266,6 +267,13 @@ export function AddressFormModal({ isOpen, initialData, isSaving, onClose, onSav
               className={inputNormal}
             />
           </div>
+
+          {/* Error del servidor (ej. dirección con pedido en curso) */}
+          {errorMessage && (
+            <div className="rounded-xl border border-red-800 bg-red-950/40 px-4 py-3">
+              <p className="text-sm text-red-400">{errorMessage}</p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Clock3, Power, Pencil } from 'lucide-react';
 import { storeService } from '@/services/store.service';
 import { HoursEditModal } from '@/components/admin/horarios/hours-edit-modal';
+import { CloseStoreModal } from '@/components/admin/horarios/close-store-modal';
 import type { BusinessHour, StoreStatus } from '@/types/store.types';
 
 // Orden de visualización Lunes→Domingo (dayOfWeek sigue convención JS: 0=Domingo).
@@ -22,9 +23,6 @@ function defaultDay(dayOfWeek: number): BusinessHour {
   return { dayOfWeek, isClosed: false, openTime: '09:00', closeTime: '22:00' };
 }
 
-const inputCls =
-  'rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-zinc-500 disabled:opacity-40';
-
 export default function HorariosPage() {
   const [days, setDays] = useState<Record<number, BusinessHour>>({});
   const [ordersPaused, setOrdersPaused] = useState(false);
@@ -34,6 +32,7 @@ export default function HorariosPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -65,19 +64,22 @@ export default function HorariosPage() {
     }
   }
 
-  // Cerrar / reabrir tienda al instante (pausa manual). No requiere "Guardar".
-  async function togglePause(close: boolean) {
+  // Cerrar / reabrir tienda (pausa manual). El cierre pasa por el modal de
+  // confirmación; reabrir es directo. No requiere "Guardar".
+  async function setStoreClosed(close: boolean, message?: string) {
     try {
       setIsToggling(true);
       setError(null);
       setSuccess(null);
       await storeService.updateSettings({
         ordersPaused: close,
-        pauseMessage: close ? pauseMessage.trim() || undefined : undefined,
+        pauseMessage: close ? message?.trim() || undefined : undefined,
       });
       setOrdersPaused(close);
+      setPauseMessage(close ? (message ?? '') : '');
       const st = await storeService.getStatus();
       setStatus(st);
+      setConfirmClose(false);
     } catch {
       setError('No se pudo cambiar el estado de la tienda.');
     } finally {
@@ -185,21 +187,11 @@ export default function HorariosPage() {
             </div>
           </div>
 
-          {/* Acción de cierre/apertura inmediato */}
+          {/* Acción de cierre/apertura */}
           <div className="flex flex-col items-stretch gap-2 lg:w-72">
-            {!ordersPaused && (
-              <input
-                type="text"
-                value={pauseMessage}
-                onChange={(e) => setPauseMessage(e.target.value)}
-                placeholder="Mensaje opcional (ej. Volvemos mañana)"
-                maxLength={200}
-                className={inputCls}
-              />
-            )}
             <button
               type="button"
-              onClick={() => togglePause(!ordersPaused)}
+              onClick={() => (ordersPaused ? setStoreClosed(false) : setConfirmClose(true))}
               disabled={isToggling}
               className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition disabled:opacity-50 ${
                 ordersPaused
@@ -269,13 +261,23 @@ export default function HorariosPage() {
         </ul>
       </div>
 
-      {/* Modal de edición */}
+      {/* Modal de edición de horarios */}
       {editing && (
         <HoursEditModal
           initialDays={days}
           isSaving={isSaving}
           onClose={() => setEditing(false)}
           onSave={handleSaveHours}
+        />
+      )}
+
+      {/* Modal de confirmación para cerrar la tienda */}
+      {confirmClose && (
+        <CloseStoreModal
+          initialMessage={pauseMessage}
+          isSaving={isToggling}
+          onConfirm={(msg) => setStoreClosed(true, msg)}
+          onClose={() => setConfirmClose(false)}
         />
       )}
     </div>
