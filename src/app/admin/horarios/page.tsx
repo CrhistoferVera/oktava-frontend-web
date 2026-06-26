@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock3, Power } from 'lucide-react';
+import { Clock3, Power, Pencil } from 'lucide-react';
 import { storeService } from '@/services/store.service';
+import { HoursEditModal } from '@/components/admin/horarios/hours-edit-modal';
 import type { BusinessHour, StoreStatus } from '@/types/store.types';
 
 // Orden de visualización Lunes→Domingo (dayOfWeek sigue convención JS: 0=Domingo).
@@ -32,6 +33,7 @@ export default function HorariosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -63,11 +65,6 @@ export default function HorariosPage() {
     }
   }
 
-  function updateDay(dayOfWeek: number, patch: Partial<BusinessHour>) {
-    setDays((prev) => ({ ...prev, [dayOfWeek]: { ...prev[dayOfWeek], ...patch } }));
-    setSuccess(null);
-  }
-
   // Cerrar / reabrir tienda al instante (pausa manual). No requiere "Guardar".
   async function togglePause(close: boolean) {
     try {
@@ -88,20 +85,28 @@ export default function HorariosPage() {
     }
   }
 
-  async function handleSaveHours() {
+  async function handleSaveHours(updated: BusinessHour[]) {
     try {
       setIsSaving(true);
       setError(null);
       setSuccess(null);
       // Solo los campos del DTO (el backend rechaza extras como `id`).
       await storeService.updateHours({
-        days: DAY_ORDER.map((d) => {
-          const { dayOfWeek, isClosed, openTime, closeTime } = days[d];
-          return { dayOfWeek, isClosed, openTime, closeTime };
-        }),
+        days: updated.map(({ dayOfWeek, isClosed, openTime, closeTime }) => ({
+          dayOfWeek,
+          isClosed,
+          openTime,
+          closeTime,
+        })),
+      });
+      setDays((prev) => {
+        const map = { ...prev };
+        updated.forEach((d) => (map[d.dayOfWeek] = d));
+        return map;
       });
       const st = await storeService.getStatus();
       setStatus(st);
+      setEditing(false);
       setSuccess('Horarios guardados correctamente.');
     } catch {
       setError('No se pudieron guardar los horarios.');
@@ -217,60 +222,62 @@ export default function HorariosPage() {
         </div>
       </div>
 
-      {/* Horario por día */}
-      <div className="flex flex-col gap-3">
-        {DAY_ORDER.map((d) => {
-          const day = days[d];
-          return (
-            <div
-              key={d}
-              className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <span className="w-28 font-medium text-white">{DAY_LABELS[d]}</span>
+      {/* ── Horario semanal (solo lectura) ── */}
+      <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+        <div className="flex items-center justify-between gap-4 border-b border-zinc-800 px-5 py-4">
+          <h2 className="text-base font-semibold text-white">Horario de atención</h2>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
+          >
+            <Pencil size={14} />
+            Editar Horarios
+          </button>
+        </div>
 
-              <div className="flex flex-1 items-center gap-3">
-                <input
-                  type="time"
-                  value={day.openTime}
-                  disabled={day.isClosed}
-                  onChange={(e) => updateDay(d, { openTime: e.target.value })}
-                  className={inputCls}
-                />
-                <span className="text-zinc-500">a</span>
-                <input
-                  type="time"
-                  value={day.closeTime}
-                  disabled={day.isClosed}
-                  onChange={(e) => updateDay(d, { closeTime: e.target.value })}
-                  className={inputCls}
-                />
-              </div>
-
-              <label className="flex items-center gap-2 text-sm text-zinc-400">
-                <input
-                  type="checkbox"
-                  checked={day.isClosed}
-                  onChange={(e) => updateDay(d, { isClosed: e.target.checked })}
-                  className="h-4 w-4 accent-red-600"
-                />
-                Cerrado
-              </label>
-            </div>
-          );
-        })}
+        <ul>
+          {DAY_ORDER.map((d) => {
+            const day = days[d];
+            const isToday = today?.dayOfWeek === d;
+            return (
+              <li
+                key={d}
+                className={`flex items-center justify-between border-t border-zinc-800/70 px-5 py-3.5 first:border-t-0 ${
+                  isToday ? 'bg-red-500/6' : ''
+                }`}
+              >
+                <span
+                  className={`flex items-center gap-2 text-sm ${
+                    isToday ? 'font-bold text-white' : 'font-medium text-zinc-300'
+                  }`}
+                >
+                  {isToday && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
+                  {DAY_LABELS[d]}
+                  {isToday && <span className="text-xs font-semibold text-red-400">· Hoy</span>}
+                </span>
+                <span
+                  className={`text-sm ${
+                    day.isClosed ? 'font-semibold text-red-400' : 'text-zinc-400'
+                  }`}
+                >
+                  {day.isClosed ? 'Cerrado' : `${day.openTime} – ${day.closeTime}`}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
-      {/* Guardar horarios */}
-      <div>
-        <button
-          type="button"
-          onClick={handleSaveHours}
-          disabled={isSaving}
-          className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
-        >
-          {isSaving ? 'Guardando...' : 'Guardar cambios'}
-        </button>
-      </div>
+      {/* Modal de edición */}
+      {editing && (
+        <HoursEditModal
+          initialDays={days}
+          isSaving={isSaving}
+          onClose={() => setEditing(false)}
+          onSave={handleSaveHours}
+        />
+      )}
     </div>
   );
 }
