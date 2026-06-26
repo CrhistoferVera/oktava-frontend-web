@@ -9,6 +9,7 @@ import {
   LineChart,
   Settings,
   ShieldCheck,
+  Clock,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -37,6 +38,7 @@ export const AdminSideBar = ({ isOpen, onClose }: SidebarProps) => {
     { label: 'Categorías',    href: '/admin/categories',   icon: <Drumstick   className="w-5 h-5" /> },
     { label: 'Clientes',      href: '/admin/clients',       icon: <User        className="w-5 h-5" /> },
     { label: 'Administradores', href: '/admin/admins',        icon: <ShieldCheck className="w-5 h-5" />, section: 'Sistema' },
+    { label: 'Horarios',       href: '/admin/horarios',      icon: <Clock       className="w-5 h-5" /> },
     { label: 'Reportes',       href: '/admin/reports',       icon: <LineChart   className="w-5 h-5" /> },
     { label: 'Configuración',  href: '/admin/configuration', icon: <Settings    className="w-5 h-5" /> },
   ];

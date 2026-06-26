@@ -24,6 +24,8 @@ import { AuthRequiredModal } from "@/components/ui/AuthRequiredModal";
 import { addressService } from "@/services/address.service";
 import { orderService } from "@/services/order.service";
 import { paymentService } from "@/services/payment.service";
+import { storeService } from "@/services/store.service";
+import type { StoreStatus } from "@/types/store.types";
 import type { Address, AddressPayload } from "@/types/address.types";
 import type { CartItem } from "@/types/storefront.types";
 import type { CreateOrderItemDto, PaymentMethod } from "@/types/order.types";
@@ -128,6 +130,13 @@ export default function CheckoutClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [storeStatus, setStoreStatus] = useState<StoreStatus | null>(null);
+  // Fail-open: hasta tener respuesta (o si falla la red) asumimos abierto.
+  const storeClosed = storeStatus ? !storeStatus.isOpen : false;
+
+  const refreshStoreStatus = () => {
+    storeService.getStatus().then(setStoreStatus).catch(() => {});
+  };
 
   // ─── Niubiz ────────────────────────────────────────────────────────────────
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -150,6 +159,11 @@ export default function CheckoutClient() {
       })
       .catch(() => {})
       .finally(() => setLoadingAddresses(false));
+  }, []);
+
+  useEffect(() => {
+    refreshStoreStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedAddress = useMemo(
@@ -186,6 +200,12 @@ export default function CheckoutClient() {
 
   function handleProceed() {
     setError(null);
+
+    // 0. Tienda cerrada → no se permite continuar.
+    if (storeClosed) {
+      setError(storeStatus?.message || 'La tienda está cerrada. No puedes hacer pedidos en este momento.');
+      return;
+    }
 
     // 1. Sin sesión → modal (no redirige, no crea pedido, no limpia carrito)
     if (!user) {
@@ -355,6 +375,7 @@ export default function CheckoutClient() {
     } catch (e: any) {
       const code = e?.response?.data?.code;
       const message = e?.response?.data?.message ?? "Ocurrió un error al crear el pedido.";
+      if (code === 'STORE_CLOSED') refreshStoreStatus();
       setError(
         code === 'PHONE_NOT_VERIFIED'
           ? "Debes verificar tu número de teléfono antes de realizar un pedido. Contacta con soporte o actualiza tu perfil."
@@ -724,6 +745,12 @@ export default function CheckoutClient() {
                 </div>
               </div>
 
+              {storeClosed && (
+                <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {storeStatus?.message || 'La tienda está cerrada. No puedes hacer pedidos en este momento.'}
+                </p>
+              )}
+
               {error && (
                 <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                   {error}
@@ -733,9 +760,10 @@ export default function CheckoutClient() {
               <button
                 type="button"
                 onClick={handleProceed}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/30 transition hover:bg-red-500 hover:scale-[1.02] active:scale-100"
+                disabled={storeClosed}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-900/30 transition hover:bg-red-500 hover:scale-[1.02] active:scale-100 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
               >
-                Ir a pagar
+                {storeClosed ? 'Tienda cerrada' : 'Ir a pagar'}
                 <ChevronRight size={16} />
               </button>
             </div>

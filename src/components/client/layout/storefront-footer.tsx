@@ -11,6 +11,7 @@ const navLinks = [
 
 const laOktavaLinks = [
   { label: "Sobre nosotros", href: "/sobre-nosotros" },
+  { label: "Horarios", href: "/horarios" },
   { label: "Ubica la Oktava", href: "/ubica-a-oktava" },
 ];
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Clock3, MapPin } from "lucide-react";
+import { HeroStatusBadge } from "./hero-status-badge";
 
 export function HomeHero() {
   return (
@@ -25,11 +26,8 @@ export function HomeHero() {
 
       {/* Content */}
       <div className="relative px-6 py-12 md:px-12 md:py-16 w-full max-w-2xl space-y-6">
-        {/* Open badge */}
-        <span className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-black/50 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-          Pedidos en línea · Abierto ahora
-        </span>
+        {/* Open/closed badge — dinámico según el horario del local */}
+        <HeroStatusBadge />
 
         {/* Main headline */}
         <h1 className="text-[4rem] md:text-[6rem] leading-[0.9] text-white [font-family:var(--font-display)] uppercase drop-shadow-lg">
